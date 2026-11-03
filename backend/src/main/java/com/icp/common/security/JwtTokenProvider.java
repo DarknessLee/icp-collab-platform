@@ -15,7 +15,8 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * JWT 生成与解析（HS256）。payload 至少包含 userId / username / roles。
+ * JWT 生成与解析（HS256）。payload 包含 userId / username / deptId / roles / perms / type / jti。
+ * access token 携带权限标识列表，便于无状态鉴权；refresh token 只用类型区分，刷新时重新加载权限。
  */
 @Component
 public class JwtTokenProvider {
@@ -25,7 +26,9 @@ public class JwtTokenProvider {
 
     private static final String CLAIM_USER_ID = "userId";
     private static final String CLAIM_USERNAME = "username";
+    private static final String CLAIM_DEPT_ID = "deptId";
     private static final String CLAIM_ROLES = "roles";
+    private static final String CLAIM_PERMS = "perms";
     private static final String CLAIM_TYPE = "type";
 
     private final JwtProperties properties;
@@ -37,27 +40,42 @@ public class JwtTokenProvider {
     }
 
     public String createAccessToken(Long userId, String username, List<String> roles) {
-        return createToken(userId, username, roles, TYPE_ACCESS, properties.getAccessTtlSeconds());
+        return createAccessToken(userId, username, null, roles, List.of());
+    }
+
+    public String createAccessToken(Long userId, String username, Long deptId,
+                                    List<String> roles, List<String> permissions) {
+        return createToken(userId, username, deptId, roles, permissions, TYPE_ACCESS,
+                properties.getAccessTtlSeconds());
     }
 
     public String createRefreshToken(Long userId, String username, List<String> roles) {
-        return createToken(userId, username, roles, TYPE_REFRESH, properties.getRefreshTtlSeconds());
+        return createToken(userId, username, null, roles, List.of(), TYPE_REFRESH,
+                properties.getRefreshTtlSeconds());
     }
 
-    private String createToken(Long userId, String username, List<String> roles, String type, long ttlSeconds) {
+    private String createToken(Long userId, String username, Long deptId, List<String> roles,
+                               List<String> permissions, String type, long ttlSeconds) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + ttlSeconds * 1000L);
         return Jwts.builder()
+                .id(java.util.UUID.randomUUID().toString())
                 .subject(String.valueOf(userId))
                 .issuer(properties.getIssuer())
                 .claim(CLAIM_USER_ID, userId)
                 .claim(CLAIM_USERNAME, username)
+                .claim(CLAIM_DEPT_ID, deptId)
                 .claim(CLAIM_ROLES, roles == null ? new ArrayList<String>() : roles)
+                .claim(CLAIM_PERMS, permissions == null ? new ArrayList<String>() : permissions)
                 .claim(CLAIM_TYPE, type)
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(secretKey)
                 .compact();
+    }
+
+    public String getJti(Claims claims) {
+        return claims.getId();
     }
 
     public Claims parse(String token) {
@@ -84,15 +102,31 @@ public class JwtTokenProvider {
         return String.valueOf(claims.get(CLAIM_USERNAME));
     }
 
+    public Long getDeptId(Claims claims) {
+        Object value = claims.get(CLAIM_DEPT_ID);
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        return null;
+    }
+
     @SuppressWarnings("unchecked")
     public List<String> getRoles(Claims claims) {
-        Object value = claims.get(CLAIM_ROLES);
+        return toStringList(claims.get(CLAIM_ROLES));
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> getPermissions(Claims claims) {
+        return toStringList(claims.get(CLAIM_PERMS));
+    }
+
+    private List<String> toStringList(Object value) {
         if (value instanceof List<?> list) {
-            List<String> roles = new ArrayList<>(list.size());
+            List<String> result = new ArrayList<>(list.size());
             for (Object item : list) {
-                roles.add(String.valueOf(item));
+                result.add(String.valueOf(item));
             }
-            return roles;
+            return result;
         }
         return new ArrayList<>();
     }
@@ -103,5 +137,9 @@ public class JwtTokenProvider {
 
     public long getAccessTtlSeconds() {
         return properties.getAccessTtlSeconds();
+    }
+
+    public long getRefreshTtlSeconds() {
+        return properties.getRefreshTtlSeconds();
     }
 }

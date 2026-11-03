@@ -124,6 +124,22 @@ export const useUserStore = defineStore('user', {
       return menuSignature(menus) !== menuSignature(this.menuTree)
     },
 
+    /** 个人中心更新资料后同步本地用户信息 */
+    applyUserProfile(user: UserInfo): void {
+      this.user = user
+      saveAuth(
+        {
+          accessToken: this.token,
+          refreshToken: this.refreshToken,
+          user,
+          roles: this.roles,
+          permissions: this.permissions,
+          menus: this.menus
+        },
+        this.mockMode
+      )
+    },
+
     async logout(): Promise<void> {
       if (!this.mockMode) {
         try {

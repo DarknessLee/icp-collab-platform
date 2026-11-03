@@ -1,9 +1,13 @@
 package com.icp.system.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.icp.common.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -20,4 +24,7 @@ public class SysMenu extends BaseEntity {
     private Integer orderNum;
     private Integer visible;
     private Integer status;
+
+    @TableField(exist = false)
+    private List<SysMenu> children = new ArrayList<>();
 }

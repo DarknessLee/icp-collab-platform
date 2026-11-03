@@ -1,9 +1,13 @@
 package com.icp.system.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.icp.common.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -16,4 +20,10 @@ public class SysRole extends BaseEntity {
     private Integer dataScope;
     private Integer status;
     private String remark;
+
+    @TableField(exist = false)
+    private List<Long> menuIds = new ArrayList<>();
+
+    @TableField(exist = false)
+    private Long userCount;
 }

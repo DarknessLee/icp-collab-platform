@@ -17,6 +17,9 @@ public interface CacheService {
 
     void evict(String key);
 
+    /** 按 key 前缀批量失效（用于角色/菜单变更后清除权限树缓存）。 */
+    void evictByPrefix(String prefix);
+
     void clear();
 
     boolean contains(String key);

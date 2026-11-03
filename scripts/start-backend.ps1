@@ -49,7 +49,21 @@ if (-not (Wait-LocalPort -Port $BackendPort -TimeoutSeconds $timeout)) {
     exit 1
 }
 
-Write-Step "Backend is UP: http://127.0.0.1:$BackendPort (pid=$($proc.Id))"
+Write-Step "Backend is UP: http://127.0.0.1:$BackendPort (launcher pid=$($proc.Id))"
+
+# Store the real JVM pid (the listener) so stop-backend can terminate it even when
+# the cmd/mvn launcher has already exited.
+$listenerPid = $null
+$lines = netstat -ano | Select-String (":$BackendPort\s+.*LISTENING")
+foreach ($line in $lines) {
+    $parts = ($line.ToString() -split '\s+') | Where-Object { $_ -ne '' }
+    $candidate = $parts[$parts.Count - 1]
+    if ($candidate -match '^\d+$') { $listenerPid = [int]$candidate; break }
+}
+if ($listenerPid) {
+    Set-Content -Path $pidFile -Value $listenerPid -Encoding ASCII
+    Write-Step "Backend JVM pid=$listenerPid (saved to $pidFile)"
+}
 Write-Step "Health: http://127.0.0.1:$BackendPort/actuator/health"
 Write-Step "Swagger: http://127.0.0.1:$BackendPort/swagger-ui/index.html"
 exit 0

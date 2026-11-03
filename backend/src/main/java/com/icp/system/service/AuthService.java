@@ -3,16 +3,19 @@ package com.icp.system.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.icp.common.api.ErrorCode;
+import com.icp.common.api.PageResult;
 import com.icp.common.cache.CacheService;
 import com.icp.common.exception.BusinessException;
 import com.icp.common.security.JwtTokenProvider;
 import com.icp.common.security.SecurityUtils;
 import com.icp.common.security.UserPrincipal;
 import com.icp.system.config.AuthProperties;
+import com.icp.system.dto.Requests.ChangePassword;
 import com.icp.system.dto.LoginRequest;
 import com.icp.system.dto.LoginResponse;
 import com.icp.system.dto.MeResponse;
 import com.icp.system.dto.MenuNode;
+import com.icp.system.dto.OnlineSession;
 import com.icp.system.dto.RefreshTokenRequest;
 import com.icp.system.dto.UserInfo;
 import com.icp.system.entity.SysDept;
@@ -33,6 +36,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -44,13 +48,16 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * 认证服务：登录 / 当前用户 / 刷新令牌 / 退出。
- * 登录失败计数与锁定策略由 icp.auth.* 配置（M1）。
+ * 认证服务：登录 / 当前用户 / 刷新令牌 / 退出 / 在线会话 / 修改密码。
+ * 锁定策略优先读 sys_config（sys.login.maxFail / sys.login.lockMinutes），缺省回退 icp.auth.*。
  */
 @Service
 public class AuthService {
 
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+
+    public static final String CONFIG_MAX_FAIL = "sys.login.maxFail";
+    public static final String CONFIG_LOCK_MINUTES = "sys.login.lockMinutes";
 
     private static final String MENU_CACHE_PREFIX = "auth:menus:";
     private static final long MENU_CACHE_TTL_SECONDS = 300L;
@@ -64,10 +71,15 @@ public class AuthService {
     private final JwtTokenProvider tokenProvider;
     private final AuthProperties authProperties;
     private final CacheService cacheService;
+    private final ConfigService configService;
+    private final PasswordPolicyService passwordPolicyService;
+    private final OnlineSessionService onlineSessionService;
 
     public AuthService(SysUserMapper userMapper, SysDeptMapper deptMapper, SysRoleMapper roleMapper,
                        SysMenuMapper menuMapper, SysLoginLogMapper loginLogMapper, PasswordEncoder passwordEncoder,
-                       JwtTokenProvider tokenProvider, AuthProperties authProperties, CacheService cacheService) {
+                       JwtTokenProvider tokenProvider, AuthProperties authProperties, CacheService cacheService,
+                       ConfigService configService, PasswordPolicyService passwordPolicyService,
+                       OnlineSessionService onlineSessionService) {
         this.userMapper = userMapper;
         this.deptMapper = deptMapper;
         this.roleMapper = roleMapper;
@@ -77,6 +89,9 @@ public class AuthService {
         this.tokenProvider = tokenProvider;
         this.authProperties = authProperties;
         this.cacheService = cacheService;
+        this.configService = configService;
+        this.passwordPolicyService = passwordPolicyService;
+        this.onlineSessionService = onlineSessionService;
     }
 
     public LoginResponse login(LoginRequest request, HttpServletRequest httpRequest) {
@@ -89,7 +104,7 @@ public class AuthService {
         LocalDateTime now = LocalDateTime.now();
         if (user.getLockUntil() != null && user.getLockUntil().isAfter(now)) {
             writeLoginLog(username, user.getId(), "login", 0, "账号锁定中", httpRequest);
-            throw new BusinessException(ErrorCode.ACCOUNT_LOCKED);
+            throw lockedException(user.getLockUntil(), now);
         }
         if (user.getStatus() == null || user.getStatus() != 1) {
             writeLoginLog(username, user.getId(), "login", 0, "账号已停用", httpRequest);
@@ -97,19 +112,20 @@ public class AuthService {
         }
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             int failCount = (user.getFailCount() == null ? 0 : user.getFailCount()) + 1;
-            boolean locked = failCount >= authProperties.getMaxFailCount();
+            boolean locked = failCount >= maxFailCount();
             LambdaUpdateWrapper<SysUser> update = new LambdaUpdateWrapper<SysUser>()
                     .eq(SysUser::getId, user.getId())
                     .set(SysUser::getFailCount, failCount)
                     .set(SysUser::getUpdateTime, now);
+            LocalDateTime lockUntil = locked ? now.plusMinutes(lockMinutes()) : null;
             if (locked) {
-                update.set(SysUser::getLockUntil, now.plusMinutes(authProperties.getLockMinutes()));
+                update.set(SysUser::getLockUntil, lockUntil);
             }
             userMapper.update(null, update);
             writeLoginLog(username, user.getId(), "login", 0,
                     locked ? "密码错误，账号已锁定" : "密码错误", httpRequest);
             if (locked) {
-                throw new BusinessException(ErrorCode.ACCOUNT_LOCKED);
+                throw lockedException(lockUntil, now);
             }
             throw new BusinessException(ErrorCode.LOGIN_FAILED);
         }
@@ -127,7 +143,7 @@ public class AuthService {
         user.setLockUntil(null);
         writeLoginLog(username, user.getId(), "login", 1, "登录成功", httpRequest);
 
-        return buildLoginResponse(user);
+        return buildLoginResponse(user, httpRequest);
     }
 
     public MeResponse me() {
@@ -156,38 +172,102 @@ public class AuthService {
         if (user == null || user.getStatus() == null || user.getStatus() != 1) {
             throw new BusinessException(ErrorCode.TOKEN_INVALID, "用户不存在或已停用");
         }
-        return buildLoginResponse(user);
+        if (user.getLockUntil() != null && user.getLockUntil().isAfter(LocalDateTime.now())) {
+            throw lockedException(user.getLockUntil(), LocalDateTime.now());
+        }
+        return buildLoginResponse(user, null);
     }
 
     public void logout() {
         UserPrincipal principal = SecurityUtils.currentUserOrNull();
         if (principal != null) {
-            SysLoginLog logEntity = new SysLoginLog();
-            logEntity.setUsername(principal.getUsername());
-            logEntity.setUserId(principal.getUserId());
-            logEntity.setLoginType("logout");
-            logEntity.setStatus(1);
-            logEntity.setMsg("退出登录");
-            logEntity.setLoginTime(LocalDateTime.now());
-            loginLogMapper.insert(logEntity);
-            cacheService.evict(MENU_CACHE_PREFIX + principal.getUserId());
+            if (StringUtils.hasText(principal.getJti())) {
+                onlineSessionService.revoke(principal.getJti());
+            }
+            writeLoginLog(principal.getUsername(), principal.getUserId(), "logout", 1, "退出登录", null);
         }
     }
 
-    private LoginResponse buildLoginResponse(SysUser user) {
+    public PageResult<OnlineSession> online(long pageNum, long pageSize, String keyword) {
+        return onlineSessionService.list(pageNum, pageSize, keyword);
+    }
+
+    public void kick(String jti) {
+        OnlineSession session = onlineSessionService.require(jti);
+        onlineSessionService.revoke(session.getJti());
+        writeLoginLog(session.getUsername(), session.getUserId(), "kick", 1, "管理员强制下线", null);
+    }
+
+    public void changePassword(ChangePassword request) {
+        UserPrincipal principal = SecurityUtils.currentUser();
+        SysUser user = userMapper.selectById(principal.getUserId());
+        if (user == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "用户不存在");
+        }
+        if (!passwordEncoder.matches(request.oldPassword(), user.getPassword())) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "原密码错误");
+        }
+        if (request.newPassword() != null && request.newPassword().equals(request.oldPassword())) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "新密码不能与原密码相同");
+        }
+        passwordPolicyService.validate(request.newPassword());
+        LambdaUpdateWrapper<SysUser> update = new LambdaUpdateWrapper<SysUser>()
+                .eq(SysUser::getId, user.getId())
+                .set(SysUser::getPassword, passwordEncoder.encode(request.newPassword()))
+                .set(SysUser::getPwdUpdateTime, LocalDateTime.now())
+                .set(SysUser::getUpdateTime, LocalDateTime.now());
+        userMapper.update(null, update);
+        onlineSessionService.revokeByUser(user.getId());
+        writeLoginLog(user.getUsername(), user.getId(), "password", 1, "修改密码", null);
+    }
+
+    private LoginResponse buildLoginResponse(SysUser user, HttpServletRequest httpRequest) {
         List<SysRole> roles = rolesOf(user.getId());
         List<String> roleCodes = roles.stream().map(SysRole::getRoleCode).collect(Collectors.toList());
         List<SysMenu> menus = menusOf(roles);
         List<String> permissions = permissionsOf(menus);
+        String accessToken = tokenProvider.createAccessToken(user.getId(), user.getUsername(),
+                user.getDeptId(), roleCodes, permissions);
+        String refreshToken = tokenProvider.createRefreshToken(user.getId(), user.getUsername(), roleCodes);
         LoginResponse response = new LoginResponse();
-        response.setAccessToken(tokenProvider.createAccessToken(user.getId(), user.getUsername(), roleCodes));
-        response.setRefreshToken(tokenProvider.createRefreshToken(user.getId(), user.getUsername(), roleCodes));
+        response.setAccessToken(accessToken);
+        response.setRefreshToken(refreshToken);
         response.setExpiresIn(tokenProvider.getAccessTtlSeconds());
         response.setUser(toUserInfo(user));
         response.setRoles(roleCodes);
         response.setPermissions(permissions);
         response.setMenus(buildMenuTree(menus));
+
+        try {
+            Claims claims = tokenProvider.parse(accessToken);
+            String ip = clientIp(httpRequest);
+            onlineSessionService.register(tokenProvider.getJti(claims), user.getId(), user.getUsername(),
+                    user.getRealName(), response.getUser().getDeptName(), ip,
+                    httpRequest == null ? null : truncate(httpRequest.getHeader("User-Agent"), 500),
+                    tokenProvider.getAccessTtlSeconds());
+        } catch (Exception ex) {
+            log.warn("register online session failed: {}", ex.getMessage());
+        }
         return response;
+    }
+
+    private BusinessException lockedException(LocalDateTime lockUntil, LocalDateTime now) {
+        long remaining = Duration.between(now, lockUntil).getSeconds();
+        if (remaining < 0) {
+            remaining = 0;
+        }
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("remainingSeconds", remaining);
+        data.put("lockUntil", lockUntil.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        return new BusinessException(ErrorCode.ACCOUNT_LOCKED, "账号已锁定，请稍后再试", data);
+    }
+
+    private int maxFailCount() {
+        return configService.getInt(CONFIG_MAX_FAIL, authProperties.getMaxFailCount());
+    }
+
+    private int lockMinutes() {
+        return configService.getInt(CONFIG_LOCK_MINUTES, authProperties.getLockMinutes());
     }
 
     private SysUser findByUsername(String username) {

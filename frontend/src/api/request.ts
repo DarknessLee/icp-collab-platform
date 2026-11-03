@@ -108,13 +108,24 @@ request.interceptors.response.use(
       ;(error as AxiosError & { backendUnavailable?: boolean }).backendUnavailable = true
     }
     if (status === 401 && isAuthEndpoint(error)) {
-      // 登录接口的 401 透传后端 message（如 40101 用户名或密码错误）
+      // 登录接口的 401 透传后端 message（如 40101 用户名或密码错误、40102 账号锁定）
       const body = error.response?.data as
-        | { code?: number; message?: string; traceId?: string }
+        | { code?: number; message?: string; traceId?: string; data?: unknown }
         | string
         | undefined
       const payload = typeof body === 'string' ? undefined : body
-      const message = payload?.message || '用户名或密码错误'
+      let message = payload?.message || '用户名或密码错误'
+      if (payload?.code === 40102) {
+        // 40102：data 携带剩余锁定秒数（字段名兼容 remainingSeconds/remainSeconds/lockSeconds）
+        const extra = (payload.data || {}) as {
+          remainingSeconds?: number
+          remainSeconds?: number
+          lockSeconds?: number
+        }
+        const seconds = extra.remainingSeconds ?? extra.remainSeconds ?? extra.lockSeconds
+        const minutes = typeof seconds === 'number' && seconds > 0 ? Math.ceil(seconds / 60) : 0
+        message = minutes > 0 ? `账号已锁定，剩余 ${minutes} 分钟` : '账号已锁定，请联系管理员解锁'
+      }
       ElMessage.error(message)
       const bizError = new Error(message) as Error & { code?: number; traceId?: string }
       bizError.code = payload?.code

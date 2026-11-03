@@ -74,6 +74,18 @@ public class CaffeineCacheService implements CacheService {
     }
 
     @Override
+    public void evictByPrefix(String prefix) {
+        if (prefix == null || prefix.isEmpty()) {
+            return;
+        }
+        for (String key : cache.asMap().keySet()) {
+            if (key != null && key.startsWith(prefix)) {
+                cache.invalidate(key);
+            }
+        }
+    }
+
+    @Override
     public void clear() {
         cache.invalidateAll();
     }

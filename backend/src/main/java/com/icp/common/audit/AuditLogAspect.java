@@ -1,9 +1,12 @@
 package com.icp.common.audit;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icp.common.security.SecurityUtils;
 import com.icp.common.security.UserPrincipal;
 import com.icp.system.entity.SysOperLog;
 import com.icp.system.mapper.SysOperLogMapper;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -17,20 +20,34 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * 审计切面：写 sys_oper_log。表不存在或写库失败时降级为告警，绝不阻断业务请求。
+ * 操作审计切面：把请求参数（脱敏后）与结果摘要写入 sys_oper_log。
+ * 表不存在或写库失败时降级为告警，绝不阻断业务请求。
  */
 @Aspect
 @Component
 public class AuditLogAspect {
 
     private static final Logger log = LoggerFactory.getLogger(AuditLogAspect.class);
+    private static final int MAX_PARAM_LENGTH = 2000;
+    private static final int MAX_RESULT_LENGTH = 1000;
+    private static final Set<String> MASK_KEYS = Set.of(
+            "password", "oldpassword", "newpassword", "confirmpassword",
+            "secret", "token", "accesstoken", "refreshtoken");
 
     private final SysOperLogMapper operLogMapper;
+    private final ObjectMapper objectMapper;
 
-    public AuditLogAspect(SysOperLogMapper operLogMapper) {
+    public AuditLogAspect(SysOperLogMapper operLogMapper, ObjectMapper objectMapper) {
         this.operLogMapper = operLogMapper;
+        this.objectMapper = objectMapper;
     }
 
     @Around("@annotation(auditLog)")
@@ -46,14 +63,15 @@ public class AuditLogAspect {
             throw ex;
         } finally {
             try {
-                save(joinPoint, auditLog, System.currentTimeMillis() - start, error);
+                save(joinPoint, auditLog, System.currentTimeMillis() - start, error, result);
             } catch (Exception ex) {
                 log.warn("audit log skipped: {}", ex.getMessage());
             }
         }
     }
 
-    private void save(ProceedingJoinPoint joinPoint, AuditLog auditLog, long costMs, Throwable error) {
+    private void save(ProceedingJoinPoint joinPoint, AuditLog auditLog, long costMs,
+                      Throwable error, Object result) {
         ServletRequestAttributes attributes =
                 (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attributes == null) {
@@ -69,17 +87,18 @@ public class AuditLogAspect {
         operLog.setMethod(joinPoint.getSignature().toShortString());
         operLog.setRequestMethod(request.getMethod());
         operLog.setRequestUri(request.getRequestURI());
-        operLog.setRequestParam(truncate(buildParams(joinPoint), 2000));
+        operLog.setRequestParam(truncate(buildPayload(joinPoint, result), MAX_PARAM_LENGTH));
         int httpStatus = response == null ? 200 : response.getStatus();
         boolean failed = error != null || httpStatus >= 500;
         operLog.setStatus(failed ? 1 : 0);
         if (error != null) {
-            operLog.setErrorMsg(truncate(error.getMessage(), 2000));
+            operLog.setErrorMsg(truncate(error.getMessage(), MAX_PARAM_LENGTH));
         }
         UserPrincipal principal = SecurityUtils.currentUserOrNull();
         if (principal != null) {
             operLog.setOperUserId(principal.getUserId());
             operLog.setOperName(principal.getUsername());
+            operLog.setDeptId(principal.getDeptId());
         }
         operLog.setOperIp(clientIp(request));
         operLog.setUserAgent(truncate(request.getHeader("User-Agent"), 500));
@@ -92,21 +111,67 @@ public class AuditLogAspect {
         }
     }
 
-    private String buildParams(ProceedingJoinPoint joinPoint) {
-        Object[] args = joinPoint.getArgs();
-        if (args == null || args.length == 0) {
+    private String buildPayload(ProceedingJoinPoint joinPoint, Object result) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("params", arguments(joinPoint));
+        if (result != null) {
+            payload.put("result", summarize(result));
+        }
+        try {
+            return objectMapper.writeValueAsString(payload);
+        } catch (Exception ex) {
             return null;
         }
-        StringBuilder builder = new StringBuilder();
+    }
+
+    private List<Object> arguments(ProceedingJoinPoint joinPoint) {
+        List<Object> values = new ArrayList<>();
+        Object[] args = joinPoint.getArgs();
+        if (args == null) {
+            return values;
+        }
         for (Object arg : args) {
-            if (arg == null || arg instanceof jakarta.servlet.ServletRequest
-                    || arg instanceof jakarta.servlet.ServletResponse) {
+            if (arg == null || arg instanceof ServletRequest || arg instanceof ServletResponse) {
                 continue;
             }
-            builder.append(arg.getClass().getSimpleName()).append(".toString()");
-            builder.append(',');
+            values.add(mask(arg));
         }
-        return builder.length() == 0 ? null : builder.toString();
+        return values;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object mask(Object arg) {
+        try {
+            Object converted = objectMapper.convertValue(arg, Object.class);
+            if (converted instanceof Map<?, ?> map) {
+                Map<String, Object> masked = new LinkedHashMap<>();
+                for (Map.Entry<?, ?> entry : map.entrySet()) {
+                    String key = String.valueOf(entry.getKey());
+                    if (MASK_KEYS.contains(key.toLowerCase(Locale.ROOT))) {
+                        masked.put(key, "******");
+                    } else {
+                        masked.put(key, entry.getValue());
+                    }
+                }
+                return masked;
+            }
+            return converted;
+        } catch (Exception ex) {
+            return arg.getClass().getSimpleName();
+        }
+    }
+
+    private Object summarize(Object result) {
+        try {
+            Object converted = objectMapper.convertValue(result, Object.class);
+            String json = objectMapper.writeValueAsString(converted);
+            if (json.length() > MAX_RESULT_LENGTH) {
+                return json.substring(0, MAX_RESULT_LENGTH) + "...";
+            }
+            return converted;
+        } catch (Exception ex) {
+            return result.getClass().getSimpleName();
+        }
     }
 
     private String clientIp(HttpServletRequest request) {

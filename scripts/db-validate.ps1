@@ -144,13 +144,13 @@ SELECT
 +(SELECT COUNT(*) FROM (SELECT doc_no c FROM coll_doc WHERE deleted=0 GROUP BY doc_no HAVING COUNT(*)>1) l)
 AS violations;
 '@ }
-  @{ Id = 'V15'; Desc = 'seed row counts (docs/04 6.3; after docs/05 alignment: menu 88 / role_menu 264 / user_role 30)'; Sql = @'
+  @{ Id = 'V15'; Desc = 'seed row counts (docs/04 6.3; after docs/05 alignment: menu 105 / role_menu 281 / user_role 30)'; Sql = @'
 SELECT
  ABS((SELECT COUNT(*) FROM sys_dept)-8)
 +ABS((SELECT COUNT(*) FROM sys_post)-6)
 +ABS((SELECT COUNT(*) FROM sys_user)-30)
 +ABS((SELECT COUNT(*) FROM sys_role)-6)
-+ABS((SELECT COUNT(*) FROM sys_menu)-88)
++ABS((SELECT COUNT(*) FROM sys_menu)-105)
 +ABS((SELECT COUNT(*) FROM sys_dict_type)-20)
 +ABS((SELECT COUNT(*) FROM sys_config)-15)
 +ABS((SELECT COUNT(*) FROM sys_job)-5)
@@ -184,7 +184,7 @@ SELECT
 +ABS((SELECT COUNT(*) FROM coll_message)-60)
 +ABS((SELECT COUNT(*) FROM sys_user_role)-30)
 +ABS((SELECT COUNT(*) FROM sys_dict_data)-84)
-+ABS((SELECT COUNT(*) FROM sys_role_menu)-264)
++ABS((SELECT COUNT(*) FROM sys_role_menu)-281)
 AS violations;
 '@ }
 )

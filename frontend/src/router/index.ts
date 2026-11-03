@@ -6,7 +6,91 @@ import type { MenuItem } from '@/types'
 
 const Layout = () => import('@/layout/index.vue')
 
-/** 静态路由：M1 只静态注册工作台，其余模块路由按后端菜单动态注册 */
+/**
+ * M2a 系统管理与个人中心页面：静态注册（登录可见，按 meta.perm / meta.permAny 做权限拦截），
+ * 侧栏仍由后端 menus 渲染；动态菜单注册遇到这些路径时跳过，避免重复路由。
+ */
+const staticPageRoutes: RouteRecordRaw[] = [
+  {
+    path: 'profile',
+    name: 'Profile',
+    component: () => import('@/views/profile/index.vue'),
+    meta: { title: '个人中心', hidden: true }
+  },
+  {
+    path: 'system/dept',
+    name: 'SystemDept',
+    component: () => import('@/views/system/dept/index.vue'),
+    meta: { title: '部门管理', perm: 'system:dept:list' }
+  },
+  {
+    path: 'system/post',
+    name: 'SystemPost',
+    component: () => import('@/views/system/post/index.vue'),
+    meta: { title: '岗位管理', perm: 'system:post:list' }
+  },
+  {
+    path: 'system/user',
+    name: 'SystemUser',
+    component: () => import('@/views/system/user/index.vue'),
+    meta: { title: '用户管理', perm: 'system:user:list' }
+  },
+  {
+    path: 'system/role',
+    name: 'SystemRole',
+    component: () => import('@/views/system/role/index.vue'),
+    meta: { title: '角色管理', perm: 'system:role:list' }
+  },
+  {
+    path: 'system/menu',
+    name: 'SystemMenu',
+    component: () => import('@/views/system/menu/index.vue'),
+    meta: { title: '菜单管理', perm: 'system:menu:list' }
+  },
+  {
+    path: 'system/dict',
+    name: 'SystemDict',
+    component: () => import('@/views/system/dict/index.vue'),
+    meta: { title: '字典管理', perm: 'system:dict:list' }
+  },
+  {
+    path: 'system/config',
+    name: 'SystemConfig',
+    component: () => import('@/views/system/config/index.vue'),
+    meta: { title: '参数管理', perm: 'system:config:list' }
+  },
+  {
+    path: 'system/log',
+    name: 'SystemLog',
+    component: () => import('@/views/system/log/index.vue'),
+    meta: { title: '日志审计', permAny: ['system:log:oper', 'audit:log:view'] }
+  },
+  {
+    path: 'system/job',
+    name: 'SystemJob',
+    component: () => import('@/views/system/job/index.vue'),
+    meta: { title: '定时任务', perm: 'system:job:list' }
+  }
+]
+
+/**
+ * 开发态自测页：仅 DEV 注册并挂到 Layout 下，生产构建时该分支被剔除。
+ */
+if (import.meta.env.DEV) {
+  staticPageRoutes.push({
+    path: 'dev/upload',
+    name: 'DevUpload',
+    component: () => import('@/views/dev/upload.vue'),
+    meta: { title: '附件上传自测', hidden: true }
+  })
+}
+
+/** 静态页面路径集合：动态菜单注册时跳过，避免同一路径注册两次 */
+const staticPagePaths = new Set<string>(
+  staticPageRoutes.map((route) => normalizePath(route.path))
+)
+
+/** 静态路由：工作台 + M2a 系统管理/个人中心，其余模块路由按后端菜单动态注册 */
 export const constantRoutes: RouteRecordRaw[] = [
   {
     path: '/login',
@@ -37,7 +121,8 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: 'Dashboard',
         component: () => import('@/views/dashboard/index.vue'),
         meta: { title: '工作台', affix: true }
-      }
+      },
+      ...staticPageRoutes
     ]
   }
 ]
@@ -93,6 +178,8 @@ export function registerMenuRoutes(menus: MenuItem[]): number {
     }
     const path = normalizePath(menu.path)
     if (!path) return
+    // M2a 页面已静态注册（含权限 meta），不再重复注册动态路由
+    if (staticPagePaths.has(path)) return
     const routeName = `Menu:${path}`
     if (router.hasRoute(routeName)) return
 
@@ -151,6 +238,16 @@ router.beforeEach((to) => {
   if (!userStore.menus.length) {
     userStore.reset()
     return { path: '/login', replace: true }
+  }
+
+  // M2a：静态页面按 meta 权限拦截（无权限直接 403，覆盖直接输入地址场景）
+  const requiredPerm = to.meta.perm as string | undefined
+  if (requiredPerm && !userStore.hasPermission(requiredPerm)) {
+    return { path: '/403', replace: true }
+  }
+  const requiredPermAny = to.meta.permAny as string[] | undefined
+  if (requiredPermAny && !requiredPermAny.some((perm) => userStore.hasPermission(perm))) {
+    return { path: '/403', replace: true }
   }
 
   if (to.name === 'CatchAll') {

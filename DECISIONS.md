@@ -1,4 +1,4 @@
-# 决策记录
+﻿# 决策记录
 
 > 一行一条；影响架构/验收的必须写；后续不重复讨论；与 docs/00 同步。
 > 待用户确认的决策标注「待确认」，确认后改为「用户确认」。
@@ -29,3 +29,5 @@
 | D22 | 2026-11-03 | `sys_menu` 60→88（6 目录 + 39 C + 43 F）、`sys_role_menu` 239→264、`sys_user_role` 30；种子由 `.runtime/tools/gen_seed.py` 生成 V2/V3（生成器不入库），V15 行数断言同步 | docs/01、docs/04 §6.3 已同步；M2 新增菜单/按钮时须更新 V15 与 docs/04 | M1 task-3 |
 | D23 | 2026-11-03 | `db-validate` V15 对**运行期增长表**（`sys_oper_log`/`sys_login_log`/`sys_file`）用「不少于种子数」判定，其余表精确相等 | 日志随运行增长，验收脚本可在任意时点复跑；种子重建后仍精确 | M1 验收复跑发现（Lead） |
 | D24 | 2026-11-03 | 流程运行数据（实例/待办/历史）由 M2c `scripts/seed-flow.ps1` 调 API 生成，不写 Flyway 种子；M1 仅校验 `wf_process_meta`/`wf_form` 静态种子 | ACT_* 由 Flowable 自建，直接插表不可控 | docs/01、docs/04 §6.3 |
+| D25 | 2026-11-03 | 在线会话（`GET /auth/online`、`DELETE /auth/online/{jti}`）用进程内注册表实现，权限复用 `system:user:list`/`system:user:reset`，不新增菜单与种子行 | Redis 替代方案的自然延伸；重启后会话清空属预期；M2a 契约已登记 | M2a 设计（Lead） |
+| D26 | 2026-11-03 | 数据变更审计不新增表：复用 `sys_oper_log`，以 `action=CHANGE`、`bizType=表名`、`bizId=主键` 记录脱敏后的 `{before,after}` JSON | 避免 M2a 改 schema 与种子；`GET /logs/changes` 即按此查询；字段长度按 oper_log 现有列截断 | M2a 设计（Lead） |

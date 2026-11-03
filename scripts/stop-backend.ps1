@@ -21,6 +21,11 @@ if ($pidValue) {
     & taskkill.exe /PID $pidValue /T /F 2>&1 | Out-Null
 } else {
     Write-Step "No pid file found, resolving listener on port $BackendPort ..."
+}
+
+# The pid file may point at the launcher (cmd/mvn) instead of the JVM, so always
+# make sure the real listener on the port and any leftover app JVM are terminated.
+function Stop-AgentsOnPort {
     $lines = netstat -ano | Select-String (":$BackendPort\s+.*LISTENING")
     foreach ($line in $lines) {
         $parts = ($line.ToString() -split '\s+') | Where-Object { $_ -ne '' }
@@ -29,6 +34,19 @@ if ($pidValue) {
             & taskkill.exe /PID ([int]$listenerPid) /T /F 2>&1 | Out-Null
         }
     }
+}
+
+for ($i = 0; $i -lt 10; $i++) {
+    if (-not (Test-LocalPort -Port $BackendPort)) { break }
+    Stop-AgentsOnPort
+    Start-Sleep -Seconds 1
+}
+
+# Last resort: leftover IcpPlatformApplication JVMs (e.g. port already released but JVM stuck).
+$leftovers = Get-CimInstance Win32_Process -Filter "Name='java.exe'" -ErrorAction SilentlyContinue |
+    Where-Object { $_.CommandLine -and $_.CommandLine.Contains('com.icp.IcpPlatformApplication') }
+foreach ($proc in $leftovers) {
+    & taskkill.exe /PID $proc.ProcessId /T /F 2>&1 | Out-Null
 }
 
 $deadline = (Get-Date).AddSeconds(30)

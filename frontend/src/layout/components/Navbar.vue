@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessageBox } from 'element-plus'
 import { ArrowDown, Expand, Fold, HomeFilled, SwitchButton, User } from '@element-plus/icons-vue'
 import { useAppStore } from '@/stores/app'
 import { useUserStore } from '@/stores/user'
@@ -35,7 +35,7 @@ function toggleSidebar(): void {
 
 async function handleCommand(command: string): Promise<void> {
   if (command === 'profile') {
-    ElMessage.info('个人中心将在 M2 阶段开放')
+    await router.push('/profile')
     return
   }
   if (command !== 'logout') return

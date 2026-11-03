@@ -45,6 +45,12 @@ public class ApiResponse<T> {
         return new ApiResponse<>(code, message, null, currentTraceId());
     }
 
+    public static <T> ApiResponse<T> fail(int code, String message, Object data) {
+        @SuppressWarnings("unchecked")
+        T typed = (T) data;
+        return new ApiResponse<>(code, message, typed, currentTraceId());
+    }
+
     private static String currentTraceId() {
         return MDC.get(TRACE_ID_KEY);
     }

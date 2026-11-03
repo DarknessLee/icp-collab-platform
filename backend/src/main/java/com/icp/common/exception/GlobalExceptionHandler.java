@@ -31,11 +31,11 @@ public class GlobalExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ApiResponse<Void>> handleBusiness(BusinessException ex) {
+    public ResponseEntity<ApiResponse<Object>> handleBusiness(BusinessException ex) {
         ErrorCode code = ex.getErrorCode();
         log.warn("business error code={} message={}", code.getCode(), ex.getMessage());
         return ResponseEntity.status(code.httpStatus())
-                .body(ApiResponse.fail(code.getCode(), ex.getMessage()));
+                .body(ApiResponse.fail(code.getCode(), ex.getMessage(), ex.getData()));
     }
 
     @ExceptionHandler({MethodArgumentNotValidException.class, BindException.class})
@@ -63,6 +63,26 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleBadRequest(Exception ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.fail(ErrorCode.PARAM_ERROR, ex.getMessage()));
+    }
+
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(
+            org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex) {
+        return ResponseEntity.ok(ApiResponse.fail(ErrorCode.PARAM_ERROR,
+                "参数类型错误：" + ex.getName()));
+    }
+
+    @ExceptionHandler(org.springframework.dao.DuplicateKeyException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDuplicateKey(org.springframework.dao.DuplicateKeyException ex) {
+        log.warn("duplicate key error: {}", ex.getMostSpecificCause().getMessage());
+        return ResponseEntity.ok(ApiResponse.fail(ErrorCode.DUPLICATE_SUBMIT, "数据已存在（唯一约束冲突）"));
+    }
+
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDataIntegrity(org.springframework.dao.DataIntegrityViolationException ex) {
+        log.warn("data integrity error: {}", ex.getMostSpecificCause().getMessage());
+        return ResponseEntity.ok(ApiResponse.fail(ErrorCode.PARAM_ERROR,
+                "数据完整性校验失败（必填字段缺失或约束冲突），请检查请求参数"));
     }
 
     @ExceptionHandler(AccessDeniedException.class)

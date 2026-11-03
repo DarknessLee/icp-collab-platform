@@ -15,6 +15,10 @@ export interface UserInfo {
   realName: string
   deptId?: number | string | null
   deptName?: string | null
+  mobile?: string
+  email?: string
+  postName?: string
+  lastLoginTime?: string
 }
 
 /**

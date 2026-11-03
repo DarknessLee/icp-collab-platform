@@ -1,4 +1,4 @@
-# 企业内控与协同运营管理平台 · 前端（M1 骨架）
+# 企业内控与协同运营管理平台 · 前端（M1 骨架 + M2a 系统管理）
 
 Vue 3.5 + TypeScript + Vite 6 + Element Plus + Pinia + Vue Router 4 + axios + ECharts（按需注册）。
 
@@ -56,17 +56,19 @@ npm run preview
 
 ```
 src/
-  api/          axios 封装与鉴权接口（request.ts 统一解包 {code,message,data,traceId}）
+  api/          axios 封装与鉴权、系统管理接口（request.ts 统一解包 {code,message,data,traceId}）
+  components/   通用组件（FileUpload 附件上传）
+  composables/  组合式函数（usePageList 分页列表）
   config/       应用信息、内置菜单与模块说明（无后端菜单时的兜底）
   directives/   v-perm 按钮权限指令
   layout/       主框架：侧栏、顶栏、多标签页、内容区
   mock/         演示账号、角色菜单/权限与兜底数据（仅演示模式使用）
-  router/       路由表、菜单动态注册与登录守卫
+  router/       路由表、静态系统管理路由、菜单动态注册与登录守卫
   stores/       Pinia：user（登录态/权限/菜单）、app（侧栏/标签页）
   styles/       全局样式
   types/        API 与业务类型
   utils/        鉴权 localStorage、菜单树处理、图标、权限判断、ECharts 按需注册
-  views/        登录、工作台、占位页、403/404
+  views/        登录、工作台、占位页、系统管理 9 页、个人中心、403/404
 ```
 
 ## 接口约定
@@ -119,6 +121,53 @@ src/
 | 6 | admin 拥有业务写权限 | **已修复**：admin 业务只读（仅导出），系统管理全量 |
 
 前端兼容说明：后端菜单子节点 `path` 仍不带前导 `/`、`type` 为 `M`/`C`/`F` 字符串；侧栏与路由注册均已归一化处理，无需后端调整。
+
+## M2a 系统管理与个人中心（真实后端验收，2026-11-03）
+
+覆盖页面：`/system/dept`、`/system/post`、`/system/user`、`/system/role`、`/system/menu`、`/system/dict`、`/system/config`、`/system/log`、`/system/job`、`/profile`；通用组件 `FileUpload`（`POST /files`，DEV 下可用 `/dev/upload` 自测页，生产构建不包含）。
+
+验收环境：后端 8080（MySQL 3307，种子 105 菜单 / 281 role_menu）+ 前端 5173（`npm run dev`）；Playwright 脚本均在仓库外 `D:\MyCodes\.smoke-frontend\`。
+
+### 回归结果
+
+| 用例集 | 脚本 | 结果 |
+| --- | --- | --- |
+| 6 角色逐页可见性 + v-perm 按钮 + 403 兜底 | `m2a-role-matrix.mjs` | **84/84 PASS**，exit 0 |
+| 每模块 CRUD 闭环（含重置密码/状态切换/菜单授权回读/在线会话/改密重登） | `m2a-crud.mjs` | **48/48 PASS**，exit 0 |
+| FileUpload：pdf 上传/下载、txt 拒绝 41300 | `m2a-upload.mjs` | **8/8 PASS**，exit 0 |
+| 数据范围抽验（admin 30 用户 vs dataScope=2 角色仅本部门 6 用户） | `m2a-scope.mjs` | **10/10 PASS**，exit 0 |
+| auditor 日志三 tab + 管理员角色授权抽屉 | `m2a-final-shots.mjs` | **7/7 PASS**，exit 0 |
+
+全部用例**非预期 console error / pageerror = 0**。
+
+### 角色页面可见性（与 docs/05 一致）
+
+| 账号 | 系统管理可见性 | 说明 |
+| --- | --- | --- |
+| admin | 9 页全部可见 + 个人中心 | 定时任务菜单可见，按钮全量 |
+| icpadmin | 系统管理 9 页全部 403 | 无 `system:*` 权限 |
+| auditor | 仅「日志审计」可见，三 tab（操作/登录/变更）均可查看 | 无写按钮 |
+| exec | 系统管理不可见，直访 9 页均 403 | 无 `system:*` 权限 |
+| dept01 | 系统管理不可见，直访 9 页均 403 | 无 `system:*` 权限 |
+| staff01 | 系统管理不可见，直访 9 页均 403 | 个人中心仍可访问 |
+
+### 截图（`D:\MyCodes\.smoke-frontend\shots\m2a\`）
+
+- 页面证据：`system-dept-admin.png`、`system-post-admin.png`、`system-user-admin.png`、`system-role-admin.png`、`system-menu-admin.png`、`system-dict-admin.png`、`system-config-admin.png`、`system-log-admin.png`、`system-job-admin.png`、`profile-admin.png`
+- 授权/权限：`system-role-assign-admin.png`（菜单授权抽屉，105 节点）、`system-log-auditor.png`（三 tab）、`system-role-403-icpadmin.png` 等 `system-*-403-<role>.png`
+- 附件/数据范围：`file-upload-admin.png`、`system-user-datascope2.png`
+
+### 构建
+
+`npm run build` 退出码 0，`vue-tsc` 0 错误，2308 modules，`vite build` 10.20s；产物 element-plus 839.49 kB / echarts 535.87 kB / vendor 305.02 kB（gzip 后分别 263.61 / 180.34 / 113.58 kB）。
+
+### 接口与已知问题
+
+- 后端实体字段与视图模型在 `src/api/system.ts` 统一双向映射（如 `deptName/deptCode`、`loginTime`、`roleCode`、`menuName/menuType`、`dictLabel/dictValue`、`configValue`、`operTime`）；菜单 `children` 偶尔返回空格字符串，已按空数组兼容。
+- 配置修改提交 `{ configValue }`；字典项创建使用 `dictType`；用户创建后可再调用 `PUT /users/{id}/roles` 分配角色（前端创建/编辑弹窗已带角色多选）。
+- 字典类型接口未提供删除（`DELETE /dicts/types/{id}` 返回 405），验收过程产生的 3 个 `qa_type_*` 测试类型残留在种子库，建议后端补齐删除接口或下次 db-reset 时清理。
+- 页面并发请求中任一接口返回 403 会触发全局「跳转 /403」，属当前统一拦截策略；为 dataScope=2 角色授权时需同时授予页面依赖的全部列表权限（如 `system:dept:list`）。
+- 附件下载由 `GET /files/{id}/download` 提供（已验证 200 + `Content-Disposition`），前端 M2a 仅封装上传，下载入口在 M2 文档模块接入。
 
 ## M1 范围与未联调项
 

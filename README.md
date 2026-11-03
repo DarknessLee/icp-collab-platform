@@ -2,7 +2,7 @@
 
 > 覆盖「制度 → 风险 → 控制矩阵 → 内控评价 → 缺陷整改」闭环，融合审批流、协同任务、文档与运营看板的企业内控一体化平台。
 
-- **当前阶段**：M2a 组织权限与审计（M0、M1 已闭环，见 [STATUS.md](STATUS.md)）
+- **当前阶段**：M2c 流程协同（M0、M1、M2a、M2b 已闭环，见 [STATUS.md](STATUS.md)）
 - **版本**：V1.0（未发表）
 - **产品形态**：B/S Web，前后端分离，浏览器访问（PC 优先，响应式兼容移动浏览器）
 - **远端仓库**：`http://192.168.1.100:3300/liyunqing/icp-collab-platform.git`（Gitea 私有，master）
@@ -38,11 +38,11 @@ powershell -ExecutionPolicy Bypass -File scripts\dev-frontend.ps1   # 前端 :51
 
 ```text
 icp-collab-platform/
-├─ backend/                 # Spring Boot 3.3.4 单模块 com.icp：common / system /（icp / collab / workflow / report 待 M2）
+├─ backend/                 # Spring Boot 3.3.4 单模块 com.icp：common / system / icp（collab / workflow / report 待 M2c–M2e）
 │  └─ src/main/resources/db/migration/   # V1 schema(42 表) / V2 seed_base / V3 seed_business
-├─ frontend/                # Vue3 + Vite：登录、主框架、动态路由、v-perm、工作台占位、403/404
-├─ scripts/                 # mysql-init/start/stop、db-reset、db-validate、build-backend、build-frontend、start/stop-backend、dev-frontend
-├─ docs/                    # 00 画像、01 阶段计划、02 差距风险、03 契约、04 数据模型与种子、05 权限矩阵、06 M1 验收报告
+├─ frontend/                # Vue3 + Vite：登录、主框架、动态路由、v-perm、工作台、系统管理 9 页、内控 7 页、403/404
+├─ scripts/                 # mysql-init/start/stop、db-reset、db-validate、build-backend、build-frontend、start/stop-backend、dev-frontend、test-api-m2a、test-api-m2b
+├─ docs/                    # 00 画像、01 阶段计划、02 差距风险、03 契约、04 数据模型与种子、05 权限矩阵、06–08 阶段验收报告
 ├─ .runtime/                # 本地 MySQL 数据、附件、日志（gitignore）
 ├─ deploy/                  # Docker Compose 等（M4 交付）
 ├─ STATUS.md / DECISIONS.md / PLAN-MATRIX.md
@@ -52,13 +52,13 @@ icp-collab-platform/
 ## 文档入口
 
 1. [STATUS.md](STATUS.md) —— 当前阶段、最近验收、下一步
-2. [DECISIONS.md](DECISIONS.md) —— 决策日志（D01–D24）
+2. [DECISIONS.md](DECISIONS.md) —— 决策日志（D01–D29）
 3. [PLAN-MATRIX.md](PLAN-MATRIX.md) —— 方案要求 vs 当前实现/证据/状态
 4. [docs/00-项目画像.md](docs/00-项目画像.md) —— 画像、范围、角色、不做清单
 5. [docs/01-阶段计划与验收口径.md](docs/01-阶段计划与验收口径.md) —— 阶段门禁与验收命令
 6. [docs/02-方案差距表与风险.md](docs/02-方案差距表与风险.md) —— 差距、假设、风险、已确认问题
 7. [docs/03-接口契约.md](docs/03-接口契约.md)、[docs/04-数据模型与种子.md](docs/04-数据模型与种子.md)、[docs/05-权限矩阵.md](docs/05-权限矩阵.md) —— M1 冻结契约
-8. [docs/06-M1-验收报告.md](docs/06-M1-验收报告.md) —— M1 实际命令、数字与偏差
+8. [docs/06-M1-验收报告.md](docs/06-M1-验收报告.md)、[docs/07-M2a-验收报告.md](docs/07-M2a-验收报告.md)、[docs/08-M2b-验收报告.md](docs/08-M2b-验收报告.md) —— 阶段实际命令、数字、偏差与遗留
 
 ## 交付边界（一期）
 

@@ -1,4 +1,4 @@
-﻿# 决策记录
+# 决策记录
 
 > 一行一条；影响架构/验收的必须写；后续不重复讨论；与 docs/00 同步。
 > 待用户确认的决策标注「待确认」，确认后改为「用户确认」。
@@ -31,3 +31,12 @@
 | D24 | 2026-11-03 | 流程运行数据（实例/待办/历史）由 M2c `scripts/seed-flow.ps1` 调 API 生成，不写 Flyway 种子；M1 仅校验 `wf_process_meta`/`wf_form` 静态种子 | ACT_* 由 Flowable 自建，直接插表不可控 | docs/01、docs/04 §6.3 |
 | D25 | 2026-11-03 | 在线会话（`GET /auth/online`、`DELETE /auth/online/{jti}`）用进程内注册表实现，权限复用 `system:user:list`/`system:user:reset`，不新增菜单与种子行 | Redis 替代方案的自然延伸；重启后会话清空属预期；M2a 契约已登记 | M2a 设计（Lead） |
 | D26 | 2026-11-03 | 数据变更审计不新增表：复用 `sys_oper_log`，以 `action=CHANGE`、`bizType=表名`、`bizId=主键` 记录脱敏后的 `{before,after}` JSON | 避免 M2a 改 schema 与种子；`GET /logs/changes` 即按此查询；字段长度按 oper_log 现有列截断 | M2a 设计（Lead） |
+| D27 | 2026-11-03 | 内控域导出不做后端接口，由前端 `exportCsv.ts` 用列表接口生成 CSV（UTF-8 BOM，pageSize 上限 500）；后端仍校验数据权限与按钮权限 | 减少一套后端导出端点与文件流测试；软著演示足够；M3 全量验收如需要再补 | M2b 设计（Lead） |
+| D28 | 2026-11-03 | M2b 阶段制度/评价计划的 `submit` 只做状态流转并返回 `pendingWorkflow=true`，`flow_instance_id` 置空；M2c 接入 Flowable 后改为真实发起流程 | 保证 M2b 可独立验收、前端可先按状态机开发；过渡偏差记入 docs/07-M2b，M2c 必须消解 | M2b 设计（Lead） |
+| D29 | 2026-11-03 | 内控数据权限映射列：制度/风险/控制/评价计划 `owner_dept_id`，评价任务 `evaluate_dept_id`（本人维度 `evaluator_id`），缺陷/整改 `dept_id`；本人维度用 `owner_user_id`/`evaluator_id`/`responsible_user_id` | 复用 M2a `@DataScope` 通用列名配置；M2c/M2d 的表按此模式登记映射 | M2b 设计（Lead） |
+
+## 备注
+
+- 状态取值统一使用：已实现 / 部分 / 暂缓 / 不做（见 STATUS/PLAN-MATRIX）。
+- 本文件只在有「影响全局边界」的决策时追加；阶段内小决策写进对应验收报告偏差段。
+

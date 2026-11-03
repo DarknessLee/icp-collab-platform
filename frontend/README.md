@@ -169,6 +169,54 @@ src/
 - 页面并发请求中任一接口返回 403 会触发全局「跳转 /403」，属当前统一拦截策略；为 dataScope=2 角色授权时需同时授予页面依赖的全部列表权限（如 `system:dept:list`）。
 - 附件下载由 `GET /files/{id}/download` 提供（已验证 200 + `Content-Disposition`），前端 M2a 仅封装上传，下载入口在 M2 文档模块接入。
 
+## M2b 内控域七页（真实后端验收，2026-11-03）
+
+覆盖页面（`src/views/icp/*`）：`/icp/policy` 制度库、`/icp/risk` 风险库、`/icp/control` 控制点、`/icp/matrix` 控制矩阵、`/icp/evaluation` 评价计划与任务（底稿处理）、`/icp/defect` 缺陷管理、`/icp/rectify` 整改管理。
+
+- 通用能力：分类树面板（`CategoryTree`）、部门选择（`DeptPicker`，无 `system:dept:list` 时退化为数字输入，避免 icpadmin 触发全局 403）、附件上传（`FileUpload`，底稿证据/整改证据）、CSV 导出（UTF-8 BOM，按钮受 `v-perm` 控制）、字典兜底（后端字典不可用时用内置中文标签与标签色）。
+- 制度：新增草稿 → 编辑 → 提交审批 → 发布（发布时刻 `yyyy-MM-dd HH:mm:ss`）→ 废止 → 草稿删除；详情抽屉含附件与正文。
+- 风险：`风险值 = 可能性 × 影响`，高 ≥15 / 中 8–14 / 低 ≤7；新增/编辑/启停/删除。
+- 矩阵：覆盖率卡片（风险总数/已覆盖/未覆盖/覆盖率，取 `GET /matrices/coverage` 实际字段）+ 覆盖分布图；新增时前端预检「同一风险 + 控制点只能建立一条矩阵」，后端重复返回业务码。
+- 评价：计划新增/编辑/提交审批/开始（生成任务）/完成/关闭/删除草稿；任务开始、底稿处理（评分、结论、抽样/测试过程、测试结果、证据附件、底稿结论）、底稿查看。
+- 缺陷：登记/编辑/详情/发起整改/关闭；整改：编辑计划、提交证据（附件+完成日期+说明）、复核通过/驳回、关闭。
+
+### 回归结果（Playwright，仓库外 `D:\MyCodes\.smoke-frontend\`）
+
+| 用例集 | 脚本 | 结果 |
+| --- | --- | --- |
+| 6 角色 7 页可见性 + v-perm 按钮 + 403 兜底 + CSV BOM + 覆盖率卡片 + admin 写接口 403/40300 | `m2b-real-pages.mjs` | **87/87 PASS**，exit 0 |
+| 数据权限（admin/dept01/staff01 列表数量、staff01 越权 40300、UI 数字） | `m2b-datascope.mjs` | **18/18 PASS**，exit 0 |
+| icpadmin 全链路 CRUD/状态流转（制度/风险/控制点/矩阵/评价计划+任务+底稿/缺陷/整改） | `m2b-real-crud.mjs` | **52/52 PASS**，exit 0 |
+
+全部用例**非预期 console error / pageerror = 0**；构建 `npm run build` 退出码 0，`vue-tsc` 0 错误，`vite build` 10.22s（element-plus 839.99 kB / echarts 535.87 kB / vendor 305.02 kB）。
+
+CSV 导出文件名（UTF-8 BOM 已验证，清单见 `shots\m2b\csv-filenames.txt`）：`制度库导出.csv`、`风险库导出.csv`、`缺陷台账导出.csv`。
+
+### 角色页面与数据权限（干净种子）
+
+| 账号 | 7 页可见性（capability） | 数据量（制度/风险/缺陷/评价计划） |
+| --- | --- | --- |
+| admin（ADMIN） | 7 页全部可见，内控写按钮全部隐藏（业务只读 + 导出）；直调写接口 403/40300 | 40 / 40 / 30 / 4 |
+| icpadmin（ICP_MANAGER） | 7 页全部可写（制度/风险/控制点/矩阵/评价/缺陷/整改） | 全量 |
+| auditor（AUDITOR） | 7 页只读 + 导出，无写按钮 | 全量只读 |
+| exec（MANAGEMENT） | 7 页只读 + 导出，无写按钮 | 全量只读 |
+| dept01（DEPT_MANAGER） | 制度/缺陷可写，风险/控制点/矩阵/评价只读，无导出 | 6 / 6 / 4 / 0（均本部门） |
+| staff01（EMPLOYEE） | 制度只读；缺陷/整改仅本人参与；风险/控制点/矩阵/评价 403 | 2 / 2 / 2（/risks、越权详情返回 40300） |
+
+### 截图（`D:\MyCodes\.smoke-frontend\shots\m2b\`）
+
+- 页面：`policy-admin/icpadmin/auditor/dept01/staff/exec.png`、`risk-*.png`、`control-*.png`、`matrix-*.png`、`evaluation-*`、`defect-*.png`、`rectify-*.png`
+- 关键证据：`policy-published.png`、`matrix-coverage-admin.png`（40项/40项/0项/100%）、`matrix-duplicate-warning.png`、`evaluation-submit.png`（底稿处理）、`evaluation-task-submit.png`、`rectify-submit-dialog.png`、`rectify-approved.png`、`defect-closed.png`、`policy-dept01.png`、`defect-staff.png`、`risk-403-staff.png`
+
+### 接口差异与前端兼容（不改后端，仅记录）
+
+- `GET /matrices/coverage` 实际返回 `{ totalRisks, coveredRisks, uncoveredRisks, coverageRate, items[] }`（非 `total/covered/rate/byLevel`），前端 `mapCoverage` 归一化后使用。
+- 整改提交 `POST /rectifies/{id}/submit` 的 `evidence` 后端 DTO 为字符串（逗号分隔附件 id），前端在 `api/icp.ts` 以 `join(',')` 适配；评价底稿 `evidence` 为附件 id 数组。
+- 矩阵重复冲突后端返回码为 `40000` 或 `40002`（`40002` 为唯一索引冲突）；且唯一索引包含逻辑删除行，历史删除过的「风险+控制点」组合仍不可复用；前端已做提交前预检 + 轮换候选控制点。
+- 评价计划「完成评价」要求计划下所有任务已提交；页面完成按钮在任务未完成时返回 40001，属业务状态机约束。
+- 数据权限：`staff01` 访问 `/risks`、`/evaluations`、越权详情均返回 `40300`；`dept01` 仅见本部门数据，前端列表数量与后端一致。
+- 缺陷列表无 `rectifyCode`（仅 `rectifyId`）；缺陷关闭要求整改存在「通过」记录，正确顺序为 整改提交 → 复核通过 → 缺陷关闭 → 整改单关闭。
+
 ## M1 范围与未联调项
 
 - 已完成：登录页（真实后端联调通过）、主框架（侧栏/面包屑/用户下拉/多标签页/移动端抽屉）、登录守卫、按菜单动态注册占位路由、直接输入模块地址时补注册路由（避免刷新 404）、`v-perm` 按钮权限、工作台统计卡片与 2 张 ECharts 图、403/404。

@@ -70,6 +70,48 @@ const staticPageRoutes: RouteRecordRaw[] = [
     name: 'SystemJob',
     component: () => import('@/views/system/job/index.vue'),
     meta: { title: '定时任务', perm: 'system:job:list' }
+  },
+  {
+    path: 'icp/policy',
+    name: 'IcpPolicy',
+    component: () => import('@/views/icp/policy/index.vue'),
+    meta: { title: '制度库', perm: 'icp:policy:list' }
+  },
+  {
+    path: 'icp/risk',
+    name: 'IcpRisk',
+    component: () => import('@/views/icp/risk/index.vue'),
+    meta: { title: '风险库', perm: 'icp:risk:list' }
+  },
+  {
+    path: 'icp/control',
+    name: 'IcpControl',
+    component: () => import('@/views/icp/control/index.vue'),
+    meta: { title: '控制点', perm: 'icp:control:list' }
+  },
+  {
+    path: 'icp/matrix',
+    name: 'IcpMatrix',
+    component: () => import('@/views/icp/matrix/index.vue'),
+    meta: { title: '控制矩阵', perm: 'icp:matrix:list' }
+  },
+  {
+    path: 'icp/evaluation',
+    name: 'IcpEvaluation',
+    component: () => import('@/views/icp/evaluation/index.vue'),
+    meta: { title: '评价计划', perm: 'icp:evaluation:list' }
+  },
+  {
+    path: 'icp/defect',
+    name: 'IcpDefect',
+    component: () => import('@/views/icp/defect/index.vue'),
+    meta: { title: '缺陷管理', perm: 'icp:defect:list' }
+  },
+  {
+    path: 'icp/rectify',
+    name: 'IcpRectify',
+    component: () => import('@/views/icp/rectify/index.vue'),
+    meta: { title: '整改管理', perm: 'icp:rectify:list' }
   }
 ]
 

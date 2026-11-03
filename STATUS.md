@@ -2,7 +2,7 @@
 
 - **软件名称/版本**：企业内控与协同运营管理平台 V1.0（未发表）
 - **当前阶段**：M2a 组织权限与审计（进行中）；M0、M1 已闭环
-- **最新 commit**：M1 阶段提交 `M1_COMMIT`（M0 收尾 `0e9c17b` 系列）
+- **最新 commit**：`1c9570a`（M1 阶段提交，已推送 origin/master）；M0 收尾提交 `0e9c17b` 系列
 - **远端**：`origin` → `http://192.168.1.100:3300/liyunqing/icp-collab-platform.git`（master 已推送）
 - **M1 验收结论**：通过（详见 `docs/06-M1-验收报告.md`）
   - 契约三件套冻结：`docs/03` 接口、`docs/04` 数据（42 表）、`docs/05` 权限矩阵

@@ -19,6 +19,9 @@ import com.icp.icp.support.CodeSeq;
 import com.icp.icp.support.IcpLookupService;
 import com.icp.icp.support.IcpScope;
 import com.icp.system.service.DataScopeService;
+import com.icp.workflow.dto.WorkflowRequests;
+import com.icp.workflow.service.WorkflowInstanceService;
+import com.icp.workflow.support.WorkflowConstants;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -26,6 +29,7 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -52,19 +56,22 @@ public class EvaluationService {
     private final IcpRiskMapper riskMapper;
     private final IcpLookupService lookupService;
     private final DataScopeService dataScopeService;
+    private final WorkflowInstanceService workflowInstanceService;
 
     public EvaluationService(IcpEvaluationMapper evaluationMapper,
                              IcpEvaluationTaskMapper taskMapper,
                              IcpMatrixMapper matrixMapper,
                              IcpRiskMapper riskMapper,
                              IcpLookupService lookupService,
-                             DataScopeService dataScopeService) {
+                             DataScopeService dataScopeService,
+                             WorkflowInstanceService workflowInstanceService) {
         this.evaluationMapper = evaluationMapper;
         this.taskMapper = taskMapper;
         this.matrixMapper = matrixMapper;
         this.riskMapper = riskMapper;
         this.lookupService = lookupService;
         this.dataScopeService = dataScopeService;
+        this.workflowInstanceService = workflowInstanceService;
     }
 
     public PageResult<IcpEvaluation> page(long pageNum, long pageSize, String keyword, Integer status,
@@ -186,18 +193,30 @@ public class EvaluationService {
         evaluationMapper.deleteById(id);
     }
 
-    /** 送审：0 → 1；M2b 不接 Flowable。 */
+    /** 评价计划 0 → 1：真实发起 Flowable 评价计划流程（docs/03 §5.1 D34）。 */
     @Transactional
     public Map<String, Object> submit(Long id) {
         IcpEvaluation existing = require(id);
         IcpScope.check(dataScopeService, dataScopeService.current(), existing.getOwnerDeptId(), existing.getOwnerUserId());
         if (existing.getStatus() != DRAFT) {
-            throw new BusinessException(ErrorCode.STATE_INVALID, "仅草稿状态的评价计划可送审");
+            throw new BusinessException(ErrorCode.STATE_INVALID, "仅草稿状态的评价计划可提交");
         }
-        existing.setStatus(SUBMITTED);
-        existing.setFlowInstanceId(null);
-        evaluationMapper.updateById(existing);
-        return actionResult(existing, 0, true);
+        Map<String, Object> formData = new LinkedHashMap<>();
+        formData.put("planCode", existing.getPlanCode());
+        formData.put("planName", existing.getPlanName());
+        formData.put("planYear", existing.getPlanYear());
+        formData.put("planType", existing.getPlanType());
+        formData.put("startDate", existing.getStartDate() == null ? null : existing.getStartDate().toString());
+        formData.put("endDate", existing.getEndDate() == null ? null : existing.getEndDate().toString());
+        formData.put("deptScope", existing.getDeptScope());
+        Map<String, Object> started = workflowInstanceService.start(new WorkflowRequests.StartRequest(
+                WorkflowConstants.EVALUATION_PLAN, id, "evaluation", formData, existing.getPlanName()), null);
+        IcpEvaluation updated = evaluationMapper.selectById(id);
+        Map<String, Object> result = actionResult(updated, 0, false);
+        result.put("processInstanceId", started.get("processInstanceId"));
+        result.put("taskId", started.get("taskId"));
+        result.put("businessNo", started.get("businessNo"));
+        return result;
     }
 
     /** 开始评价：1 → 2，按矩阵模板生成任务（幂等：已生成过则跳过）。 */

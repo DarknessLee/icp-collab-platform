@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             targetNamespace="http://www.icp-platform.com/workflow">
+
+    <process id="purchase_apply" name="采购申请审批" isExecutable="true">
+        <startEvent id="start" name="开始"/>
+        <userTask id="submit" name="发起申请" flowable:assignee="${initiator}"/>
+        <userTask id="approve" name="采购审批" flowable:candidateGroups="${approverGroups}"/>
+        <endEvent id="end" name="结束"/>
+
+        <sequenceFlow id="flow1" sourceRef="start" targetRef="submit"/>
+        <sequenceFlow id="flow2" sourceRef="submit" targetRef="approve"/>
+        <sequenceFlow id="flow3" sourceRef="approve" targetRef="end"/>
+    </process>
+</definitions>

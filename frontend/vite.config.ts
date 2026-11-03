@@ -54,6 +54,15 @@ export default defineConfig({
           if (!id.includes('node_modules')) return undefined
           if (id.includes('echarts') || id.includes('zrender')) return 'echarts'
           if (id.includes('element-plus') || id.includes('@element-plus')) return 'element-plus'
+          // bpmn-js 仅流程图组件按需动态引入，单独拆包，避免进入首屏 vendor
+          if (
+            id.includes('bpmn-js') ||
+            id.includes('diagram-js') ||
+            id.includes('bpmn-moddle') ||
+            id.includes('bpmn-font')
+          ) {
+            return 'bpmn'
+          }
           return 'vendor'
         }
       }

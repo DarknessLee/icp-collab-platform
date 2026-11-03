@@ -13,6 +13,8 @@ import com.icp.icp.mapper.IcpMatrixMapper;
 import com.icp.icp.mapper.IcpRiskMapper;
 import com.icp.icp.support.IcpLookupService;
 import com.icp.system.service.DataScopeService;
+import com.icp.workflow.dto.WorkflowRequests;
+import com.icp.workflow.service.WorkflowInstanceService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -56,27 +58,34 @@ class EvaluationServiceTest {
     private IcpLookupService lookupService;
     @Mock
     private DataScopeService dataScopeService;
+    @Mock
+    private WorkflowInstanceService workflowInstanceService;
 
     private EvaluationService evaluationService;
 
     @BeforeEach
     void setUp() {
         evaluationService = new EvaluationService(evaluationMapper, taskMapper, matrixMapper, riskMapper,
-                lookupService, dataScopeService);
+                lookupService, dataScopeService, workflowInstanceService);
         lenient().when(dataScopeService.current())
                 .thenReturn(new DataScopeInfo(1L, 2L, DataScopeInfo.ALL, Collections.emptyList()));
+        lenient().when(workflowInstanceService.start(any(WorkflowRequests.StartRequest.class), any()))
+                .thenReturn(Map.of("processInstanceId", "pi-eval-1", "taskId", "task-eval-1",
+                        "businessNo", "PJ-2026-05"));
     }
 
     @Test
-    void submitDraftReturnsPendingWorkflow() {
-        when(evaluationMapper.selectById(1604L)).thenReturn(plan(1604L, 0));
+    void submitDraftStartsWorkflowAndReturnsInstance() {
+        when(evaluationMapper.selectById(1604L)).thenReturn(plan(1604L, 0), plan(1604L, 1));
         when(taskMapper.countByPlan(1604L)).thenReturn(0L);
 
         Map<String, Object> result = evaluationService.submit(1604L);
 
         assertThat(result.get("status")).isEqualTo(1);
-        assertThat(result.get("pendingWorkflow")).isEqualTo(true);
-        assertThat(result.get("flowInstanceId")).isNull();
+        assertThat(result.get("pendingWorkflow")).isEqualTo(false);
+        assertThat(result.get("processInstanceId")).isEqualTo("pi-eval-1");
+        org.mockito.Mockito.verify(workflowInstanceService)
+                .start(any(WorkflowRequests.StartRequest.class), any());
     }
 
     @Test

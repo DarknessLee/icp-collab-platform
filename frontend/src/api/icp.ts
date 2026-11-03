@@ -2,8 +2,7 @@ import { http } from './request'
 import { toPage } from './system'
 import type { PageResult } from '@/types/system'
 import type {
-  ControlPayload,
-  ControlQuery,
+  ControlPayload,  ControlQuery,
   ControlRow,
   DefectPayload,
   DefectQuery,
@@ -34,6 +33,12 @@ import type {
   RiskRow,
   WorkpaperRow
 } from '@/types/icp'
+
+/** 制度/评价提交审批后可能返回流程实例，前端据此提示「可在流程中心跟踪」，不再二次触发发布 */
+export interface WorkflowStartResult {
+  processInstanceId?: string
+  pendingWorkflow?: boolean
+}
 
 /**
  * M2b 内控域接口（docs/03 §4 + docs/04 §3）。
@@ -81,7 +86,7 @@ export const policyApi = {
   create: (data: PolicyPayload) => http<PolicyRow>({ url: '/policies', method: 'post', data }),
   update: (id: number, data: PolicyPayload) => http<PolicyRow>({ url: `/policies/${id}`, method: 'put', data }),
   remove: (id: number) => http<void>({ url: `/policies/${id}`, method: 'delete' }),
-  submit: (id: number) => http<void>({ url: `/policies/${id}/submit`, method: 'post' }),
+  submit: (id: number) => http<WorkflowStartResult>({ url: `/policies/${id}/submit`, method: 'post' }),
   publish: (id: number) => http<void>({ url: `/policies/${id}/publish`, method: 'post' }),
   abolish: (id: number) => http<void>({ url: `/policies/${id}/abolish`, method: 'post' })
 }
@@ -150,7 +155,7 @@ export const evaluationApi = {
   update: (id: number, data: EvaluationPayload) =>
     http<EvaluationRow>({ url: `/evaluations/${id}`, method: 'put', data }),
   remove: (id: number) => http<void>({ url: `/evaluations/${id}`, method: 'delete' }),
-  submit: (id: number) => http<void>({ url: `/evaluations/${id}/submit`, method: 'post' }),
+  submit: (id: number) => http<WorkflowStartResult>({ url: `/evaluations/${id}/submit`, method: 'post' }),
   start: (id: number) => http<void>({ url: `/evaluations/${id}/start`, method: 'post' }),
   finish: (id: number) => http<void>({ url: `/evaluations/${id}/finish`, method: 'post' }),
   close: (id: number) => http<void>({ url: `/evaluations/${id}/close`, method: 'post' })

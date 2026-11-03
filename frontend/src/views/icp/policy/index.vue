@@ -171,8 +171,10 @@ async function confirmAction(message: string, title: string): Promise<boolean> {
 async function submitApproval(row: PolicyRow): Promise<void> {
   if (!(await confirmAction(`制度「${row.policyName}」提交审批后进入审批流程，审批期间不可编辑。是否继续？`, '提交审批'))) return
   try {
-    await policyApi.submit(row.id)
-    ElMessage.success('已提交审批')
+    const result = await policyApi.submit(row.id)
+    ElMessage.success(
+      result?.processInstanceId ? '已提交审批，可在流程中心跟踪审批进度' : '已提交审批'
+    )
     await load()
   } catch {
     // 失败原因由 request.ts 统一提示

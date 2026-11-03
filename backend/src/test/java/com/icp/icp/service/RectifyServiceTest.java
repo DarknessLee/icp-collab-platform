@@ -10,6 +10,8 @@ import com.icp.icp.mapper.IcpDefectMapper;
 import com.icp.icp.mapper.IcpRectifyMapper;
 import com.icp.icp.support.IcpLookupService;
 import com.icp.system.service.DataScopeService;
+import com.icp.workflow.dto.WorkflowRequests;
+import com.icp.workflow.service.WorkflowInstanceService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -45,14 +48,20 @@ class RectifyServiceTest {
     private IcpLookupService lookupService;
     @Mock
     private DataScopeService dataScopeService;
+    @Mock
+    private WorkflowInstanceService workflowInstanceService;
 
     private RectifyService rectifyService;
 
     @BeforeEach
     void setUp() {
-        rectifyService = new RectifyService(rectifyMapper, defectMapper, lookupService, dataScopeService);
+        rectifyService = new RectifyService(rectifyMapper, defectMapper, lookupService, dataScopeService,
+                workflowInstanceService);
         lenient().when(dataScopeService.current())
                 .thenReturn(new DataScopeInfo(1L, 2L, DataScopeInfo.ALL, Collections.emptyList()));
+        lenient().when(workflowInstanceService.start(any(WorkflowRequests.StartRequest.class), any()))
+                .thenReturn(Map.of("processInstanceId", "pi-rect-1", "taskId", "task-rect-1",
+                        "businessNo", "ZG-2026-001"));
     }
 
     @Test
@@ -65,14 +74,19 @@ class RectifyServiceTest {
     }
 
     @Test
-    void submitMovesToReviewingAndSetsFinishDate() {
-        when(rectifyMapper.selectById(1751L)).thenReturn(rectify(1751L, 0, null));
+    void submitStartsWorkflowAndKeepsReviewingStatus() {
+        IcpRectify submittedRow = rectify(1751L, 1, "4001,4002");
+        submittedRow.setFinishDate(LocalDate.now());
+        when(rectifyMapper.selectById(1751L)).thenReturn(rectify(1751L, 0, null), submittedRow);
 
-        IcpRectify submitted = rectifyService.submit(1751L, new IcpRequests.RectifySubmit("4001,4002"));
+        Map<String, Object> submitted = rectifyService.submit(1751L, new IcpRequests.RectifySubmit("4001,4002"));
 
-        assertThat(submitted.getStatus()).isEqualTo(1);
-        assertThat(submitted.getFinishDate()).isNotNull();
-        assertThat(submitted.getEvidence()).isEqualTo("4001,4002");
+        assertThat(submitted.get("status")).isEqualTo(1);
+        assertThat(submitted.get("finishDate")).isNotNull();
+        assertThat(submitted.get("evidence")).isEqualTo("4001,4002");
+        assertThat(submitted.get("pendingWorkflow")).isEqualTo(false);
+        assertThat(submitted.get("processInstanceId")).isEqualTo("pi-rect-1");
+        assertThat(submitted.get("businessNo")).isEqualTo("ZG-2026-001");
         verify(rectifyMapper).updateById(any(IcpRectify.class));
     }
 

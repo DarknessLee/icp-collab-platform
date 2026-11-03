@@ -20,6 +20,13 @@ spring:
       max-file-size: 50MB
       max-request-size: 100MB
 
+flowable:
+  database-schema-update: true
+  history-level: full
+  async-executor-activate: false
+  # M2c: WorkflowDefinitionService 统一部署(deployment name=icp-processes)，关闭自动部署避免重复版本
+  check-process-definitions: false
+
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true

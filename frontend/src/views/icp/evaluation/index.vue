@@ -216,8 +216,18 @@ async function planAction(row: EvaluationRow, action: 'submit' | 'start' | 'fini
     return
   }
   try {
-    await evaluationApi[action](row.id)
-    ElMessage.success(`已${labels[action]}`)
+    let successText = `已${labels[action]}`
+    if (action === 'submit') {
+      const result = await evaluationApi.submit(row.id)
+      if (result?.processInstanceId) successText = '已提交审批，可在流程中心跟踪审批进度'
+    } else if (action === 'start') {
+      await evaluationApi.start(row.id)
+    } else if (action === 'finish') {
+      await evaluationApi.finish(row.id)
+    } else {
+      await evaluationApi.close(row.id)
+    }
+    ElMessage.success(successText)
     await loadPlans()
   } catch {
     // 失败原因由 request.ts 统一提示

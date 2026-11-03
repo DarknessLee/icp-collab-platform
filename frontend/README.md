@@ -1,4 +1,4 @@
-# 企业内控与协同运营管理平台 · 前端（M1 骨架 + M2a 系统管理）
+# 企业内控与协同运营管理平台 · 前端（M1 骨架 + M2a 系统管理 + M2b 内控域 + M2c 流程中心）
 
 Vue 3.5 + TypeScript + Vite 6 + Element Plus + Pinia + Vue Router 4 + axios + ECharts（按需注册）。
 
@@ -216,6 +216,45 @@ CSV 导出文件名（UTF-8 BOM 已验证，清单见 `shots\m2b\csv-filenames.t
 - 评价计划「完成评价」要求计划下所有任务已提交；页面完成按钮在任务未完成时返回 40001，属业务状态机约束。
 - 数据权限：`staff01` 访问 `/risks`、`/evaluations`、越权详情均返回 `40300`；`dept01` 仅见本部门数据，前端列表数量与后端一致。
 - 缺陷列表无 `rectifyCode`（仅 `rectifyId`）；缺陷关闭要求整改存在「通过」记录，正确顺序为 整改提交 → 复核通过 → 缺陷关闭 → 整改单关闭。
+
+## M2c 流程中心（真实后端验收，2026-11-03）
+
+覆盖页面（`src/views/workflow/*`）：`/wf/todo` 我的待办、`/wf/done` 我的已办、`/wf/initiated` 我发起、`/wf/monitor` 流程监控、`/wf/instance` 流程实例（复用 `GET /workflow/monitor` 数据，仅列表与筛选，无统计卡片）、`/wf/definition` 流程定义；申请单 `/wf/purchase` 采购申请、`/wf/seal` 用印申请、`/wf/borrow` 文档借阅（菜单 path 由后端种子下发且无前导 `/`，前端统一 `normalizePath` 归一化；`wf/form`、`wf/urge` 后端置 `visible=0`，前端不设别名）。
+
+- 待办详情抽屉：`GET /tasks/{id}` 的 `formSchema` 只读渲染 + `formData`/`business` 业务字段合并展示（金额两位小数、印章/采购类型枚举映射、附件 chips）、`/instances/{id}/history` 时间线、`/instances/{id}/diagram-highlight` 高亮流程图；页脚同意（意见+附件）/驳回（意见必填）/催办（内容必填），按钮受 `workflow:task:approve|reject|urge` 的 `v-perm` 控制。
+- 已办/我发起：分页与流程类型/状态/关键字筛选，状态标签 运行中/已完成/已驳回；我发起的已驳回实例支持「修改后重新提交」（`POST /instances/{id}/resubmit`）。
+- 监控：运行中/已完成/已驳回/超时（>48h）统计卡片 + 超时筛选 + 实例抽屉；流程定义 6 条列表与 bpmn-js 只读流程图弹窗。
+- 申请单：采购（标题/采购类型/供应商/金额/预算/用途，金额必填且不得超预算）提交后提示「已提交审批，可在流程中心跟踪进度」；用印（印章类型/日期/事由/附件）；借阅（文档 ID 须在 `coll_doc` 存在/起止日期/事由）。创建时后端直接发起流程并在 `data.workflow` 返回 `processInstanceId/taskId`。
+- 制度/评价提交审批：`policyApi.submit`、`evaluationApi.submit` 若返回 `processInstanceId` 则提示「已提交审批，可在流程中心跟踪审批进度」，不再前端二次发布。
+- bpmn-js 仅只读 viewer，动态 `import('bpmn-js/lib/Viewer')`；`vite.config.ts` 单独拆 `bpmn` chunk（140.08 kB / gzip 38.39 kB）。真实 BPMN XML 无 `BPMNDiagram/DI` 坐标，`WorkflowDiagram` 前端按节点顺序自动生成水平布局坐标后渲染，`fit-viewport` 失败时回退 1:1 缩放。
+
+### 真实后端回归（2026-11-03，clean seed + seed-flow 后）
+
+| 脚本 | 用例 | 结果 |
+| --- | --- | --- |
+| `D:\MyCodes\.smoke-frontend\m2c-real-pages.mjs` | 6 角色 × 9 页面访问/按钮/403 | **69/69 PASS** |
+| `D:\MyCodes\.smoke-frontend\m2c-real-flow.mjs` | 采购发起→审批→完成、用印驳回→重提、催办、bpmn 高亮、监控/实例/定义、403 | **55/55 PASS** |
+| `D:\MyCodes\.smoke-frontend\m2c-real-extra.mjs` | 采购驳回→重提→完成、文档借阅发起→审批→完成 | **28/28 PASS** |
+| `D:\MyCodes\.smoke-frontend\m2c-final-shots.mjs` | 最终截图与页面复核 | **21/21 PASS** |
+
+非预期 console/pageerror = 0；`npm run build` exit 0（vue-tsc 0 错误，vite 12.49s；element-plus 839.99 kB / echarts 535.87 kB / bpmn 140.08 kB / vendor 354.24 kB）。
+
+实测 6 角色（回归结束时，权限数为登录返回 permissions 条数）：admin 86（只读，无 add/approve，可监控/实例/定义）、icpadmin 107（全量）、auditor 53（只读）、exec 51（只读 + 待办审批）、dept01 70（待办/已办/申请单/审批）、staff01 33（待办/已办/申请单/审批发起节点）。待办/已办/我发起实测：admin 0/0/0、icpadmin 3/30/18、auditor 0/0/0、exec 5/0/0、dept01 5/21/0、staff01 2/20/15；监控统计 running 7 / completed 23 / rejected 3 / overdue 0 / total 33（回归期间 Lead 验收脚本也写入 verify 单据，数字为结束时快照）。
+
+已跑通闭环：采购 发起（员工）→ 发起人确认 → 部门负责人审批 → 管理层审批 → COMPLETED；采购 发起 → 部门负责人驳回 → 员工「重新提交」→ RUNNING → 审批至 COMPLETED；用印 发起 → 驳回 → 重新提交（RUNNING）；文档借阅 发起 → 部门负责人 → 内控管理员审批 → COMPLETED；待办抽屉表单/历史/流程图（当前节点蓝框、已完成绿框）、催办提示、已办与我发起状态标签。
+
+本轮创建的业务单（供验收后 reset）：CG-2026-022、CG-2026-031、CG-2026-032（采购），YY-2026-017（用印），借阅单 3394（docId 3301）。另有 Lead 验收脚本生成的 `Lead verify *` 单据（CG-2026-023~030、YY-2026-014~016、借阅 3391~3393）。
+
+### 截图（`D:\MyCodes\.smoke-frontend\shots\m2c\`）
+
+最终批次：`final-todo-form.png`、`final-todo-history.png`、`final-todo-diagram.png`、`final-{todo,done,initiated,monitor,instance,definition,purchase,seal,borrow}-icpadmin.png`、`final-monitor-admin.png`、`final-instance-admin.png`、`final-monitor-403-staff01.png`；回归批次：`{todo,done,initiated,monitor,purchase,seal,borrow}-{icpadmin,admin,auditor,exec,dept01,staff01}.png`、`purchase-submit-form`、`seal-submit-form`、`borrow-submit-form`、`flow-approve-drawer-*`、`flow-reject-drawer-*`、`flow-diagram-staff01`、`flow-initiated-running/completed/rejected`、`flow-resubmitted`。
+
+### 已知遗留
+
+- 后端 BPMN 无 DI 坐标：前端已自动布局兜底，建议后端导图时输出标准 `BPMNDiagram`。
+- `exec`（MANAGEMENT）实际有 `workflow:task:approve/reject/urge`，可审批待办，与「管理层只读」口径存在偏差，按真实 permissions 动态显示。
+- 借阅申请需 `coll_doc` 中已存在文档 ID，前端暂以「文档 ID」输入 + 说明提示，M3 文档中心开放后替换为文档选择器。
+
 
 ## M1 范围与未联调项
 

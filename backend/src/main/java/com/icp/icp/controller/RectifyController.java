@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 @Tag(name = "整改跟踪")
 @RestController
 @RequestMapping("/api/v1/rectifies")
@@ -61,8 +63,8 @@ public class RectifyController {
     @PostMapping("/{id}/submit")
     @PreAuthorize("hasAuthority('icp:rectify:submit')")
     @AuditLog(module = "内控管理", action = "提交整改", businessType = "icp_rectify")
-    public ApiResponse<IcpRectify> submit(@PathVariable Long id,
-                                          @RequestBody(required = false) IcpRequests.RectifySubmit request) {
+    public ApiResponse<Map<String, Object>> submit(@PathVariable Long id,
+                                                   @RequestBody(required = false) IcpRequests.RectifySubmit request) {
         return ApiResponse.ok(service.submit(id, request));
     }
 

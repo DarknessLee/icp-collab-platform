@@ -15,12 +15,16 @@ import com.icp.icp.mapper.IcpRectifyMapper;
 import com.icp.icp.support.IcpLookupService;
 import com.icp.icp.support.IcpScope;
 import com.icp.system.service.DataScopeService;
+import com.icp.workflow.dto.WorkflowRequests;
+import com.icp.workflow.service.WorkflowInstanceService;
+import com.icp.workflow.support.WorkflowConstants;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -45,15 +49,18 @@ public class RectifyService {
     private final IcpDefectMapper defectMapper;
     private final IcpLookupService lookupService;
     private final DataScopeService dataScopeService;
+    private final WorkflowInstanceService workflowInstanceService;
 
     public RectifyService(IcpRectifyMapper rectifyMapper,
                           IcpDefectMapper defectMapper,
                           IcpLookupService lookupService,
-                          DataScopeService dataScopeService) {
+                          DataScopeService dataScopeService,
+                          WorkflowInstanceService workflowInstanceService) {
         this.rectifyMapper = rectifyMapper;
         this.defectMapper = defectMapper;
         this.lookupService = lookupService;
         this.dataScopeService = dataScopeService;
+        this.workflowInstanceService = workflowInstanceService;
     }
 
     public PageResult<IcpRectify> page(long pageNum, long pageSize, Long defectId, Long deptId, Integer status,
@@ -121,9 +128,13 @@ public class RectifyService {
         return existing;
     }
 
-    /** 提交整改：0/3 → 1，要求整改证据（docs/04 §4）。 */
+    /**
+     * 整改提交（0/3 → 1）：真实发起 Flowable 缺陷整改流程（docs/03 §5.1 D34 / M2c 修订 B22）。
+     *
+     * <p>提交本身不再把整改置 2（待复核），保持 1（待复核/流转中）；通过/驳回结果由流程回调写入。</p>
+     */
     @Transactional
-    public IcpRectify submit(Long id, IcpRequests.RectifySubmit request) {
+    public Map<String, Object> submit(Long id, IcpRequests.RectifySubmit request) {
         IcpRectify existing = require(id);
         IcpScope.check(dataScopeService, dataScopeService.current(), existing.getDeptId(), existing.getResponsibleUserId());
         if (existing.getStatus() != PENDING && existing.getStatus() != REJECTED) {
@@ -139,10 +150,29 @@ public class RectifyService {
         if (existing.getFinishDate() == null) {
             existing.setFinishDate(LocalDate.now());
         }
-        existing.setStatus(REVIEWING);
         rectifyMapper.updateById(existing);
-        fillNames(List.of(existing));
-        return existing;
+        Map<String, Object> formData = new LinkedHashMap<>();
+        formData.put("rectifyCode", existing.getRectifyCode());
+        formData.put("defectId", existing.getDefectId());
+        formData.put("rectifyPlan", existing.getRectifyPlan());
+        formData.put("deadline", existing.getDeadline() == null ? null : existing.getDeadline().toString());
+        formData.put("evidence", existing.getEvidence());
+        Map<String, Object> started = workflowInstanceService.start(new WorkflowRequests.StartRequest(
+                WorkflowConstants.DEFECT_RECTIFY, id, "rectify", formData, null), null);
+        IcpRectify updated = rectifyMapper.selectById(id);
+        fillNames(List.of(updated));
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("id", updated.getId());
+        result.put("rectifyCode", updated.getRectifyCode());
+        result.put("defectId", updated.getDefectId());
+        result.put("status", updated.getStatus());
+        result.put("finishDate", updated.getFinishDate() == null ? null : updated.getFinishDate().toString());
+        result.put("evidence", updated.getEvidence());
+        result.put("pendingWorkflow", false);
+        result.put("processInstanceId", started.get("processInstanceId"));
+        result.put("taskId", started.get("taskId"));
+        result.put("businessNo", started.get("businessNo"));
+        return result;
     }
 
     /** 审核通过：1 → 2，记录复核人/时间/意见，并把关联缺陷推进到待复核。 */

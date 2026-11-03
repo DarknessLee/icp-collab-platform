@@ -9,6 +9,8 @@ import com.icp.icp.mapper.IcpPolicyCategoryMapper;
 import com.icp.icp.mapper.IcpPolicyMapper;
 import com.icp.icp.support.IcpLookupService;
 import com.icp.system.service.DataScopeService;
+import com.icp.workflow.dto.WorkflowRequests;
+import com.icp.workflow.service.WorkflowInstanceService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,25 +46,34 @@ class PolicyServiceTest {
     private IcpLookupService lookupService;
     @Mock
     private DataScopeService dataScopeService;
+    @Mock
+    private WorkflowInstanceService workflowInstanceService;
 
     private PolicyService policyService;
 
     @BeforeEach
     void setUp() {
-        policyService = new PolicyService(policyMapper, categoryMapper, lookupService, dataScopeService);
+        policyService = new PolicyService(policyMapper, categoryMapper, lookupService, dataScopeService,
+                workflowInstanceService);
         lenient().when(dataScopeService.current())
                 .thenReturn(new DataScopeInfo(1L, 2L, DataScopeInfo.ALL, Collections.emptyList()));
+        lenient().when(workflowInstanceService.start(any(WorkflowRequests.StartRequest.class), any()))
+                .thenReturn(Map.of("processInstanceId", "pi-policy-1", "taskId", "task-policy-1",
+                        "businessNo", "ZD-2026-0001"));
     }
 
     @Test
-    void submitDraftMovesToApprovingWithoutWorkflow() {
-        when(policyMapper.selectById(1101L)).thenReturn(policy(1101L, 0));
+    void submitDraftStartsWorkflowAndReturnsInstance() {
+        when(policyMapper.selectById(1101L)).thenReturn(policy(1101L, 0), policy(1101L, 1));
 
         Map<String, Object> result = policyService.submit(1101L);
 
         assertThat(result.get("status")).isEqualTo(1);
-        assertThat(result.get("pendingWorkflow")).isEqualTo(true);
-        assertThat(result.get("flowInstanceId")).isNull();
+        assertThat(result.get("pendingWorkflow")).isEqualTo(false);
+        assertThat(result.get("processInstanceId")).isEqualTo("pi-policy-1");
+        assertThat(result.get("taskId")).isEqualTo("task-policy-1");
+        org.mockito.Mockito.verify(workflowInstanceService)
+                .start(any(WorkflowRequests.StartRequest.class), any());
     }
 
     @Test

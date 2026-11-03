@@ -34,6 +34,12 @@
 | D27 | 2026-11-03 | 内控域导出不做后端接口，由前端 `exportCsv.ts` 用列表接口生成 CSV（UTF-8 BOM，pageSize 上限 500）；后端仍校验数据权限与按钮权限 | 减少一套后端导出端点与文件流测试；软著演示足够；M3 全量验收如需要再补 | M2b 设计（Lead） |
 | D28 | 2026-11-03 | M2b 阶段制度/评价计划的 `submit` 只做状态流转并返回 `pendingWorkflow=true`，`flow_instance_id` 置空；M2c 接入 Flowable 后改为真实发起流程 | 保证 M2b 可独立验收、前端可先按状态机开发；过渡偏差记入 docs/07-M2b，M2c 必须消解 | M2b 设计（Lead） |
 | D29 | 2026-11-03 | 内控数据权限映射列：制度/风险/控制/评价计划 `owner_dept_id`，评价任务 `evaluate_dept_id`（本人维度 `evaluator_id`），缺陷/整改 `dept_id`；本人维度用 `owner_user_id`/`evaluator_id`/`responsible_user_id` | 复用 M2a `@DataScope` 通用列名配置；M2c/M2d 的表按此模式登记映射 | M2b 设计（Lead） |
+| D30 | 2026-11-03 | 流程引擎采用**真实 Flowable 7 内嵌** Spring Boot，共用 3307 `icp_platform` 库；`ACT_*` 表由 Flowable 自动建（`database-schema-update=true`，不入 Flyway），Flyway 只建 `wf_*` 业务表 | 满方案「真实流程引擎」要求，同时保持数据库单一实例、Flyway 只管理自有表；航图/部署不受影响 | M2c 设计（Lead，Q2 已确认） |
+| D31 | 2026-11-03 | BPMN 以 classpath `processes/*.bpmn20.xml` 随应用启动自动部署（deployment=`icp-processes`），同 key 再部署即新版本，`wf_process_meta.version` 同步 | 无需 M2c 做在线设计器（二期）；版本演进靠重新打包；bpmn-js 仅只读展示 | M2c 设计（Lead） |
+| D32 | 2026-11-03 | 待办办理人用 `candidateGroups`（角色编码）+ 发起节点 `assignee=${initiator}`；待办查询=候选组命中当前用户角色 ∪ assignee 本人；加签/委派/转办二期 | 不引入 Flowable 身份组件（自有 RBAC 已存在），`candidateGroups` 直接复用角色编码；避免双套组织模型 | M2c 设计（Lead） |
+| D33 | 2026-11-03 | 驳回统一跳回发起节点（Demo 语义）并把业务单据状态回退；同实例 `POST /instances/{id}/resubmit` 重提，历史追加而非覆盖；抄送以 `coll_message`(type=CC) 落地，不做独立抄送表 | 简化 Demo 流转语义且可解释；新增表最小化；重提不新建实例便于「驳回后重提」演示 | M2c 设计（Lead） |
+| D34 | 2026-11-03 | 消解 D28：制度/评价计划 `submit` 改为真实发起流程并返回 `{pendingWorkflow:false, processInstanceId, taskId, businessNo}`；审批通过由流程回调推进单据状态（制度→生效、计划→执行中） | 保持旧字段兼容前端；状态推进从「前端二次调用」变为「引擎回调」，符合方案真实审批闭环 | M2c 设计（Lead） |
+| D35 | 2026-11-03 | M2c 运行数据由 `scripts/seed-flow.ps1` 经 REST 生成（60 实例/40 待办/20 催办），不直写 `ACT_*`、不写 Flyway；脚本幂等（重复执行不翻倍） | 与 D24 一致；保证任意环境可重建同构演示数据；失败退出非 0 | M2c 设计（Lead） |
 
 ## 备注
 

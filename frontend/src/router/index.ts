@@ -112,6 +112,60 @@ const staticPageRoutes: RouteRecordRaw[] = [
     name: 'IcpRectify',
     component: () => import('@/views/icp/rectify/index.vue'),
     meta: { title: '整改管理', perm: 'icp:rectify:list' }
+  },
+  {
+    path: 'wf/todo',
+    name: 'WorkflowTodo',
+    component: () => import('@/views/workflow/todo/index.vue'),
+    meta: { title: '我的待办', perm: 'workflow:todo' }
+  },
+  {
+    path: 'wf/done',
+    name: 'WorkflowDone',
+    component: () => import('@/views/workflow/done/index.vue'),
+    meta: { title: '我的已办', perm: 'workflow:done' }
+  },
+  {
+    path: 'wf/initiated',
+    name: 'WorkflowInitiated',
+    component: () => import('@/views/workflow/initiated/index.vue'),
+    meta: { title: '我发起的', perm: 'workflow:initiated' }
+  },
+  {
+    path: 'wf/monitor',
+    name: 'WorkflowMonitor',
+    component: () => import('@/views/workflow/monitor/index.vue'),
+    meta: { title: '流程监控', perm: 'workflow:monitor:view' }
+  },
+  {
+    path: 'wf/definition',
+    name: 'WorkflowDefinition',
+    component: () => import('@/views/workflow/processes/index.vue'),
+    meta: { title: '流程定义', permAny: ['workflow:definition:list', 'workflow:form:list'] }
+  },
+  {
+    path: 'wf/instance',
+    name: 'WorkflowInstance',
+    component: () => import('@/views/workflow/instance/index.vue'),
+    meta: { title: '流程实例', permAny: ['workflow:instance:list', 'workflow:monitor:view'] }
+  },
+  {
+    path: 'wf/purchase',
+    name: 'WorkflowPurchase',
+    component: () => import('@/views/workflow/purchase/index.vue'),
+    meta: { title: '采购申请', permAny: ['workflow:purchase:list', 'workflow:purchase:add'] }
+  },
+  {
+    path: 'wf/seal',
+    name: 'WorkflowSeal',
+    component: () => import('@/views/workflow/seal/index.vue'),
+    meta: { title: '用印申请', permAny: ['workflow:seal:list', 'workflow:seal:add'] }
+  },
+  {
+    path: 'wf/borrow',
+    name: 'WorkflowBorrow',
+    component: () => import('@/views/workflow/borrow/index.vue'),
+    meta: { title: '文档借阅', permAny: ['workflow:borrow:list', 'workflow:borrow:add', 'coll:doc:borrow'] }
   }
 ]
 

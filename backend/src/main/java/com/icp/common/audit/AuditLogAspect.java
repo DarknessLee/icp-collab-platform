@@ -82,7 +82,9 @@ public class AuditLogAspect {
 
         SysOperLog operLog = new SysOperLog();
         operLog.setTraceId(MDC.get("traceId"));
-        operLog.setTitle(auditLog.action().isEmpty() ? joinPoint.getSignature().getName() : auditLog.action());
+        String auditAction = auditLog.action().isEmpty() ? joinPoint.getSignature().getName() : auditLog.action();
+        String auditModule = auditLog.module();
+        operLog.setTitle(auditModule == null || auditModule.isBlank() ? auditAction : auditModule + "-" + auditAction);
         operLog.setBusinessType(auditLog.businessType());
         operLog.setMethod(joinPoint.getSignature().toShortString());
         operLog.setRequestMethod(request.getMethod());

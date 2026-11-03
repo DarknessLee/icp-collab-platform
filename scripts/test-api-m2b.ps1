@@ -1,6 +1,19 @@
 # M2b (icp domain) API contract test against real MySQL 3307 + backend 8080.
 # ASCII only (PowerShell 5.1 decodes BOM-less UTF-8 as ANSI).
 # Seed-dependent assertions expect a freshly rebuilt DB: run scripts/db-reset.ps1 first.
+# IMPORTANT RUN ORDER (M2b must run on the CLEAN seed, BEFORE seed-flow):
+#   1) scripts/stop-backend.ps1
+#   2) scripts/db-reset.ps1            (must end with db-validate 15/15)
+#   3) scripts/start-backend.ps1
+#   4) scripts/test-api-m2a.ps1        (M2a system-management regression)
+#   5) scripts/test-api-m2b.ps1        (THIS FILE - exact counts assume clean seed)
+#   6) scripts/seed-flow.ps1           (creates 60 M2c instances + extra policy/evaluation rows)
+#   7) scripts/test-api-m2c.ps1
+#   8) lead verifier scripts (verify-m2c.ps1)
+# Why order matters: seed-flow.ps1 drives real workflows that CREATE business docs
+# (13 policies, 10 evaluations, ...), so /policies total becomes 40+N and the exact
+# count assertions below (40 policies / 30 defects) fail by design. Do NOT relax them;
+# run this script on the clean seed instead.
 # Usage: powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test-api-m2b.ps1
 $ErrorActionPreference = 'Stop'
 $base = 'http://127.0.0.1:8080/api/v1'
@@ -64,6 +77,8 @@ Remove-StaleTestRows '/defects' 'defectCode' 'QX' 30
 
 
 # ---- data scope (fresh seed) ----
+# NOTE: total=40 is an exact seed count and only valid on a clean DB (before seed-flow).
+# seed-flow creates policy docs through the real workflow, so after it this MUST be 40+N.
 $adminPol = Invoke-Api 'GET' '/policies?pageNum=1&pageSize=500' $null $adminToken
 Step 'scope admin full policies' ($adminPol.code -eq 0 -and $adminPol.data.total -eq 40) ("total=" + $adminPol.data.total)
 
@@ -113,6 +128,7 @@ foreach ($p in $newPerms) { if ($login.data.permissions -notcontains $p) { $hasA
 Step 'icpadmin new perms' $hasAll ($newPerms.Count.ToString() + ' checked')
 
 # ---- policies ----
+# NOTE: same clean-seed precondition as above (40 = seed count, exact on clean DB only).
 $p = Invoke-Api 'GET' '/policies?pageNum=1&pageSize=500' $null $token
 Step 'policy list pageSize500' ($p.code -eq 0 -and $p.data.total -eq 40) ("total=" + $p.data.total + " rows=" + $p.data.list.Count)
 $created = Invoke-Api 'POST' '/policies' @{ policyName = 'API Test Policy'; categoryId = 1001; content = 'test content'; ownerDeptId = 2 } $token
@@ -121,7 +137,7 @@ $policyId = $created.data.id
 $badPublish = Invoke-Api 'POST' "/policies/$policyId/publish" @{} $token
 Step 'publish from draft rejected' ($badPublish.code -eq 40001) ("code=" + $badPublish.code + " msg=" + $badPublish.message)
 $sub = Invoke-Api 'POST' "/policies/$policyId/submit" $null $token
-Step 'policy submit' ($sub.code -eq 0 -and $sub.data.status -eq 1 -and $sub.data.pendingWorkflow -eq $true) ("status=" + $sub.data.status + " pendingWorkflow=" + $sub.data.pendingWorkflow)
+Step 'policy submit starts workflow' ($sub.code -eq 0 -and $sub.data.status -eq 1 -and $sub.data.pendingWorkflow -eq $false -and $null -ne $sub.data.processInstanceId) ("status=" + $sub.data.status + " pi=" + $sub.data.processInstanceId)
 $pub = Invoke-Api 'POST' "/policies/$policyId/publish" @{ effectiveDate = '2026-11-01' } $token
 Step 'policy publish' ($pub.code -eq 0 -and $pub.data.status -eq 2 -and $null -ne $pub.data.publishTime) ("status=" + $pub.data.status + " publishTime=" + $pub.data.publishTime)
 $abol = Invoke-Api 'POST' "/policies/$policyId/abolish" $null $token
@@ -166,7 +182,7 @@ $ev = Invoke-Api 'POST' '/evaluations' @{ planName = 'API Test Evaluation'; plan
 Step 'evaluation create' ($ev.code -eq 0 -and $ev.data.planCode -match '^PJ-2026-\d{2}$' -and $ev.data.status -eq 0) ("code=" + $ev.data.planCode)
 $evid = $ev.data.id
 $evSub = Invoke-Api 'POST' "/evaluations/$evid/submit" $null $token
-Step 'evaluation submit pending' ($evSub.code -eq 0 -and $evSub.data.status -eq 1 -and $evSub.data.pendingWorkflow -eq $true) ("status=" + $evSub.data.status)
+Step 'evaluation submit starts workflow' ($evSub.code -eq 0 -and $evSub.data.status -eq 1 -and $evSub.data.pendingWorkflow -eq $false -and $null -ne $evSub.data.processInstanceId) ("status=" + $evSub.data.status + " pi=" + $evSub.data.processInstanceId)
 $evStart = Invoke-Api 'POST' "/evaluations/$evid/start" $null $token
 Step 'evaluation start generates tasks' ($evStart.code -eq 0 -and $evStart.data.status -eq 2) ("status=" + $evStart.data.status)
 $tasks = Invoke-Api 'GET' ("/evaluation-tasks?planId=" + $evid + "&pageSize=500") $null $token
@@ -195,7 +211,7 @@ $rec = Invoke-Api 'POST' "/defects/$did/rectify" @{ rectifyPlan = 'Plan'; deadli
 Step 'defect rectify generates' ($rec.code -eq 0 -and $rec.data.defectStatus -eq 1 -and $rec.data.rectifyCode -match '^ZG-2026-\d{3}$') ("rectify=" + $rec.data.rectifyCode)
 $zid = $rec.data.rectifyId
 $zSub = Invoke-Api 'POST' "/rectifies/$zid/submit" @{ evidence = '4001' } $token
-Step 'rectify submit' ($zSub.code -eq 0 -and $zSub.data.status -eq 1) ("status=" + $zSub.data.status)
+Step 'rectify submit starts workflow' ($zSub.code -eq 0 -and $zSub.data.status -eq 1 -and $zSub.data.pendingWorkflow -eq $false -and $null -ne $zSub.data.processInstanceId) ("status=" + $zSub.data.status + " pi=" + $zSub.data.processInstanceId)
 $zApp = Invoke-Api 'POST' "/rectifies/$zid/approve" @{ reviewOpinion = 'ok' } $token
 Step 'rectify approve' ($zApp.code -eq 0 -and $zApp.data.status -eq 2 -and $null -ne $zApp.data.reviewTime) ("status=" + $zApp.data.status)
 $dGet = Invoke-Api 'GET' "/defects/$did" $null $token

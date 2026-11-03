@@ -8,18 +8,18 @@
 
 | 方案要求 | 当前实现 | 测试/证据 | 文档位置 | 状态 |
 | --- | --- | --- | --- | --- |
-| 组织权限：部门/岗位/用户/角色/菜单/按钮 CRUD | 已实现：部门/岗位/用户/角色/菜单/字典/参数/任务 9 模块 CRUD + 重置密码/状态切换/菜单授权（105 节点）；种子菜单 105 | Lead verify-m2a 57/57 ×3；前端 84/84 + 48/48；后端 test-api-m2a 79/79 | docs/03、docs/05、docs/07 | 已实现 |
+| 组织权限：部门/岗位/用户/角色/菜单/按钮 CRUD | 已实现：部门/岗位/用户/角色/菜单/字典/参数/任务 9 模块 CRUD + 重置密码/状态切换/菜单授权（149 节点，随 M2b/M2c 扩展）；种子菜单 149 | Lead verify-m2a 57/57 ×3；前端 84/84 + 48/48；后端 test-api-m2a 79/79 | docs/03、docs/05、docs/07 | 已实现 |
 | RBAC + 数据权限（本人/本部门/本部门及下级） | 已实现：`@DataScope` 按 data_scope 1/2/3/4 过滤，5=自定义暂缓 | admin 30 人、dept01 4 人、staff01 1 人、dataScope=2 临时角色仅 6 人；JUnit DataScope 2 项 | docs/05、docs/07 | 已实现 |
 | 登录与安全：JWT + Refresh、密码策略、失败锁定、在线用户 | 已实现：access 2h/refresh 7d、BCrypt、5 次失败锁定 40102、在线会话列表/强制下线、改密后旧 token 失效 | 6 角色登录、错误密码、锁定、踢人后 401 实测 | docs/03、docs/07 | 已实现 |
-| 系统审计：操作日志、登录日志、数据变更审计、流程留痕 | 已实现（审计部分）：操作/登录/变更三类查询 + traceId 命中；流程留痕待 M2c | `/logs/oper|login|changes`、`/logs/trace/{traceId}` 实测；auditor 可读 | docs/03、docs/07 | 部分 |
-| 制度库：分类/版本/生效日期/附件/关联流程/发布审批 | 已实现：分类树 + 制度 40 条 CRUD + submit/publish/abolish 状态机 + 前端 7 页之制度页（CSV 导出）；编码 ZD-2026-xxx | 后端 icp 单测 49 项；test-api-m2b 47/47；前端 87/18/52 | docs/03、docs/04、docs/08 | 已实现（审批接 Flowable 见 M2c） |
+| 系统审计：操作日志、登录日志、数据变更审计、流程留痕 | 已实现：操作/登录/变更三类查询 + traceId 命中；流程发起/审批/驳回/催办落 `sys_oper_log`（module=流程中心） | verify-m2c C23 审计用例 PASS；auditor 可读 | docs/03、docs/07、docs/09 | 已实现 |
+| 制度库：分类/版本/生效日期/附件/关联流程/发布审批 | 已实现：分类树 + 制度 40 条 CRUD + submit（真实发起 Flowable，D34）/abolish 状态机 + 制度页 CSV 导出；审批通过回调 status=2 + publish_time | test-api-m2b 47/47；verify-m2c C17 PASS；前端 173/173 | docs/03、docs/04、docs/08、docs/09 | 已实现 |
 | 风险库：分类/等级/影响×可能性评分/责任人 | 已实现：分类/风险 CRUD + probability×impact 自动定级（15/8 阈值）+ 启停；40 条种子 | 评分边界 6/8/15 单测；前端评分预览 | docs/03、docs/08 | 已实现 |
 | 控制矩阵：风险—控制点—制度—流程—岗位关联与覆盖度 | 已实现：控制点 60/矩阵 60 CRUD + 唯一键冲突提示 + `GET /matrices/coverage`（40 风险全覆盖 100%） | coverage 实测 40/40/0/100.0；矩阵唯一键单测 | docs/03、docs/08 | 已实现（唯一键与逻辑删除冲突为已知限制） |
 | 内控评价：计划/任务/评分/底稿 | 已实现：计划 submit/start（按矩阵模板生成任务、幂等）/finish/close + 任务 start/submit + 底稿；种子 4/20/20 | 单测 start 幂等/finish 门禁；前端 52/52 闭环 | docs/03、docs/08 | 已实现 |
-| 缺陷登记/分级/整改/证据/复核关闭 | 已实现：缺陷 CRUD/rectify/close + 整改 submit/approve/reject/close 闭环；30/25 种子 | 前端完整闭环 52/52；关闭前置校验单测 | docs/03、docs/04、docs/08 | 已实现 |
-| BPMN 定义 + 6 条内置流程 + 表单绑定 | `wf_process_meta` 6 条 + `wf_form` 6 条种子；Flowable 7 集成与 BPMN 部署待 M2c | 待 M2c | docs/03、docs/04 | 部分 |
-| 待办/已办/抄送/催办/流程监控/超时预警 | 菜单/权限与流程种子已备；引擎与接口待 M2c | 待 M2c | docs/03 | 部分 |
-| 审批历史留痕/意见/附件；bpmn-js 只读流程图 | 契约与表结构（wf_*）已定；待 M2c | 待 M2c | docs/03 | 部分 |
+| 缺陷登记/分级/整改/证据/复核关闭 | 已实现：缺陷 CRUD/rectify/close + 整改 submit（真实发起流程，D34）/approve/reject/close 闭环；approve→整改 2+缺陷 2、reject→0+缺陷 1 | 前端闭环 52/52；verify-m2c C19/C19b PASS | docs/03、docs/04、docs/08、docs/09 | 已实现 |
+| BPMN 定义 + 6 条内置流程 + 表单绑定 | 已实现：Flowable 7.1.0 内嵌 + 6 条 BPMN（classpath 启动部署，deployment=icp-processes，version 回写）；formData JSON + formSchema 只读渲染 | 6 keys/version1/diagram 实测；mvn verify 98 tests；verify-m2c 77/77 | docs/03 §5.1、docs/04、docs/09 | 已实现（无在线设计器，D31） |
+| 待办/已办/抄送/催办/流程监控/超时预警 | 已实现：待办/已办/我发起、同意/驳回/催办、monitor 统计与 overdue（timeout.hours=48）；抄送落 `coll_message(CC)` 无独立页 | 6 角色待办 0/40/0/17/4/0；verify-m2c C04–C15 PASS；seed-flow 80/0 | docs/03 §5.1、docs/09 | 已实现 |
+| 审批历史留痕/意见/附件；bpmn-js 只读流程图 | 已实现：历史时间线（ACT_HI_*）、审批意见/附件、`/diagram-highlight` + bpmn-js 17.11.1 只读高亮（无 DI 坐标时前端自动布局） | 前端待办详情/高亮用例 PASS；verify-m2c C13/C14 PASS | docs/03、docs/09 | 已实现（一级审批，无加签/转办） |
 | 任务中心：计划/任务/子任务/优先级/截止提醒 | 表 80 任务/30 评论 + 状态机已定；接口与页面待 M2d | 待 M2d | docs/03 | 部分 |
 | 文档中心：目录/权限/版本/本地下载 | 表 6 分类/40 文档/30 权限/10 借阅 + 本地存储 FileStorage 已实现；接口待 M2d | 待 M2d | docs/03 | 部分 |
 | 公告/站内信（SSE）/日程 | 表 12 公告/120 已读/20 日程/60 消息 + SSE 契约已定；接口待 M2d | 待 M2d | docs/03 | 部分 |
@@ -27,7 +27,7 @@
 | 预警：超时任务/到期制度/高风险缺陷 + 定时任务 | 契约与 `sys_job` 5 条种子已定；扫描逻辑待 M2e | 待 M2e | docs/03 | 部分 |
 | 审计查询：登录/操作/变更日志（审计员只读） | 已实现：auditor 仅「日志审计」菜单，三 tab 查询 + 详情抽屉 | 前端 7/7；auditor `/logs/oper` 200、`/logs/changes` 200、写接口 403 | docs/03、docs/07 | 已实现 |
 | 字典/参数/附件/健康检查 | 已实现：字典/参数 CRUD、附件上传下载（20MB + 类型白名单）、`/actuator/health` UP | 前端 file 8/8；后端 41300 用例；health UP | docs/03、docs/07 | 已实现 |
-| 动态表单渲染（字段/校验/布局，JSON Schema） | `wf_form` schema 字段与契约已定；渲染组件待 M2c | 待 M2c | docs/03 | 部分 |
+| 动态表单渲染（字段/校验/布局，JSON Schema） | 已实现只读渲染：待办 formSchema（text/textarea/select/date/number/amount/attachmentList）+ 业务字段合并展示；无在线表单设计器（二期） | 待办详情 formData 回读用例 PASS | docs/03 §5.1、docs/09 | 部分 |
 | 数据权限自定义部门范围 | 未开始（字段与枚举 5 已预留） | — | docs/05 | 暂缓 |
 | 多租户实装 | 仅 `tenant_id` 字段预留 | — | docs/04 | 暂缓 |
 | OAuth2/LDAP/AD、电子签名 | 未开始（契约标注预留） | — | docs/03 | 暂缓 |
@@ -49,7 +49,7 @@
 | ① 30 分钟一键部署（本地等效） | 分步脚本已可复现（M1 实测 db-reset 10s + 构建 + 启动）；一键脚本待 M4 | 复现步骤见 docs/06 §8 | docs/10、docs/09 | 部分 |
 | ② 登录 / 菜单 / 数据权限 | 登录/菜单/按钮/数据权限已实测 6 角色 + 临时 dataScope=2 角色 | Lead 57/57 ×3；前端 84/84、dataScope 10/10 | docs/05、docs/07 | 已实现 |
 | ③ 内控闭环（制度→…→复核关闭） | 已实现：制度发布→风险/控制→矩阵→评价计划/任务/底稿→缺陷→整改→复核关闭全链路页面前后端打通（submit 过渡 pendingWorkflow，M2c 接 Flowable） | 前端 52/52 闭环 + Lead API 探针；icpadmin 全链路实测 | docs/03、docs/08 | 已实现 |
-| ④ 审批待办 / 催办 / 留痕 | 契约与权限已定；待 M2c | 待 M2c | docs/03、docs/08 | 部分 |
+| ④ 审批待办 / 催办 / 留痕 | 已实现：6 条流程可发起→同意/驳回→完成，待办/已办/我发起隔离，催办落库+消息，历史与高亮可查 | 后端 70/70；Lead 77/77 ×3；前端 173/173；截图 shots\m2c | docs/09、docs/03 §5.1 | 已实现 |
 | ⑤ 审计可查可追溯 | 操作/登录/变更三类可查 + traceId 追溯；哈希链留 M3 评估 | Lead 57/57（A27–A30）；auditor 三 tab 前端 7/7 | docs/03、docs/07 | 已实现 |
 | ⑥ 备份恢复演练 | 待 M4 | 待 M4 | docs/10、docs/09 | 部分 |
 

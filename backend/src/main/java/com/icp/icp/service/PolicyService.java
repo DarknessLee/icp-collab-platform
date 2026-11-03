@@ -16,6 +16,9 @@ import com.icp.icp.support.CodeSeq;
 import com.icp.icp.support.IcpLookupService;
 import com.icp.icp.support.IcpScope;
 import com.icp.system.service.DataScopeService;
+import com.icp.workflow.dto.WorkflowRequests;
+import com.icp.workflow.service.WorkflowInstanceService;
+import com.icp.workflow.support.WorkflowConstants;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -48,15 +51,18 @@ public class PolicyService {
     private final IcpPolicyCategoryMapper categoryMapper;
     private final IcpLookupService lookupService;
     private final DataScopeService dataScopeService;
+    private final WorkflowInstanceService workflowInstanceService;
 
     public PolicyService(IcpPolicyMapper policyMapper,
                          IcpPolicyCategoryMapper categoryMapper,
                          IcpLookupService lookupService,
-                         DataScopeService dataScopeService) {
+                         DataScopeService dataScopeService,
+                         WorkflowInstanceService workflowInstanceService) {
         this.policyMapper = policyMapper;
         this.categoryMapper = categoryMapper;
         this.lookupService = lookupService;
         this.dataScopeService = dataScopeService;
+        this.workflowInstanceService = workflowInstanceService;
     }
 
     public PageResult<IcpPolicy> page(long pageNum, long pageSize, String keyword, Long categoryId, Integer status,
@@ -181,18 +187,30 @@ public class PolicyService {
         policyMapper.deleteById(id);
     }
 
-    /** 送审：0 → 1；M2b 不接 Flowable，flow_instance_id 保持 null，返回 pendingWorkflow=true。 */
+    /** 制度 0 → 1：真实发起 Flowable 制度发布流程（docs/03 §5.1 D34）。 */
     @Transactional
     public Map<String, Object> submit(Long id) {
         IcpPolicy existing = require(id);
         IcpScope.check(dataScopeService, dataScopeService.current(), existing.getOwnerDeptId(), existing.getOwnerUserId());
         if (existing.getStatus() != DRAFT) {
-            throw new BusinessException(ErrorCode.STATE_INVALID, "仅草稿状态的制度可送审");
+            throw new BusinessException(ErrorCode.STATE_INVALID, "仅草稿状态的制度可提交");
         }
-        existing.setStatus(APPROVING);
-        existing.setFlowInstanceId(null);
-        policyMapper.updateById(existing);
-        return actionResult(existing, true);
+        Map<String, Object> formData = new LinkedHashMap<>();
+        formData.put("policyCode", existing.getPolicyCode());
+        formData.put("policyName", existing.getPolicyName());
+        formData.put("categoryId", existing.getCategoryId());
+        formData.put("version", existing.getVersion());
+        formData.put("effectiveDate", existing.getEffectiveDate() == null ? null : existing.getEffectiveDate().toString());
+        formData.put("expireDate", existing.getExpireDate() == null ? null : existing.getExpireDate().toString());
+        formData.put("ownerDeptId", existing.getOwnerDeptId());
+        Map<String, Object> started = workflowInstanceService.start(new WorkflowRequests.StartRequest(
+                WorkflowConstants.POLICY_PUBLISH, id, "policy", formData, existing.getPolicyName()), null);
+        IcpPolicy updated = policyMapper.selectById(id);
+        Map<String, Object> result = actionResult(updated, false);
+        result.put("processInstanceId", started.get("processInstanceId"));
+        result.put("taskId", started.get("taskId"));
+        result.put("businessNo", started.get("businessNo"));
+        return result;
     }
 
     /** 发布：1 → 2，要求生效日期与发布时间（docs/04 §4）。 */

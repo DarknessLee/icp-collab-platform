@@ -25,6 +25,7 @@
         <springdoc.version>2.6.0</springdoc.version>
         <jjwt.version>0.12.6</jjwt.version>
         <flyway.version>10.10.0</flyway.version>
+        <flowable.version>7.1.0</flowable.version>
     </properties>
 
     <dependencies>
@@ -53,6 +54,13 @@
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
             <version>${mybatis-plus.version}</version>
+        </dependency>
+
+        <!-- Flowable 7.1.0 is built against Spring Boot 3.3.4 (same as this project) -->
+        <dependency>
+            <groupId>org.flowable</groupId>
+            <artifactId>flowable-spring-boot-starter-process</artifactId>
+            <version>${flowable.version}</version>
         </dependency>
 
         <dependency>

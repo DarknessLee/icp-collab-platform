@@ -65,6 +65,13 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.fail(ErrorCode.PARAM_ERROR, ex.getMessage()));
     }
 
+    @ExceptionHandler(org.springframework.web.HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMediaType(org.springframework.web.HttpMediaTypeNotSupportedException ex) {
+        // 客户端 Content-Type 与接口不一致时按参数错误处理，避免暴露 500
+        return ResponseEntity.ok(ApiResponse.fail(ErrorCode.PARAM_ERROR,
+                "请求 Content-Type 不支持，请使用 application/json"));
+    }
+
     @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(
             org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex) {

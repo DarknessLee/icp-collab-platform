@@ -24,3 +24,8 @@
 | D17 | 2026-11-03 | M0 仅创建根目录与 M0 文档，不写业务代码；先建目录是用户明确要求（便于创建同名远端仓库） | 不违反「M0 确认前不写代码」 | 用户指令 + 手册 M0 |
 | D18 | 2026-11-03 | 远端仓库 `http://192.168.1.100:3300/liyunqing/icp-collab-platform.git`（Gitea 私有，账号 `liyunqing`，凭据由 Windows 凭据管理器保存）；本地 `master` 已推送并跟踪 `origin/master` | 每次阶段结束提交并推送；凭据不写入仓库 | 用户提供（Q5） |
 | D19 | 2026-11-03 | 后端采用**单 Spring Boot 模块 + 包分层**（`com.icp.common/system/icp/collab/workflow/report`），不拆 Maven 多模块 | 方案工程结构为多模块；Demo 以包边界等价模块边界，换取构建速度与交付简洁；包依赖规则写入 docs/03 | Lead 建议（M1） |
+| D20 | 2026-11-03 | 权限模型落地约定：`sys_role.role_code` 用大写（`ADMIN`/`ICP_MANAGER`/`DEPT_MANAGER`/`EMPLOYEE`/`AUDITOR`/`MANAGEMENT`）；`data_scope` 取值 **1 本人 / 2 本部门 / 3 本部门及下级 / 4 全部 / 5 自定义（二期）**；登录返回 `menus` 为**嵌套树**（M 目录→C 菜单→F 按钮，children 挂载，已授权节点必带祖先目录） | 前端按大写角色码归一化显示；种子与 docs/04/docs/05 一致；后端菜单查询不返回根级叶子 | M1 联调实测（task-3） |
+| D21 | 2026-11-03 | `admin` 只挂 `ADMIN` 角色（不再同时挂 `MANAGEMENT`）；角色权限按 docs/05 矩阵单角色定义，避免多角色并集越权 | 避免 admin 因并集获得流程监控/采购/用印等矩阵外权限；exec 由独立账号承担 | M1 联调（task-3） |
+| D22 | 2026-11-03 | `sys_menu` 60→88（6 目录 + 39 C + 43 F）、`sys_role_menu` 239→264、`sys_user_role` 30；种子由 `.runtime/tools/gen_seed.py` 生成 V2/V3（生成器不入库），V15 行数断言同步 | docs/01、docs/04 §6.3 已同步；M2 新增菜单/按钮时须更新 V15 与 docs/04 | M1 task-3 |
+| D23 | 2026-11-03 | `db-validate` V15 对**运行期增长表**（`sys_oper_log`/`sys_login_log`/`sys_file`）用「不少于种子数」判定，其余表精确相等 | 日志随运行增长，验收脚本可在任意时点复跑；种子重建后仍精确 | M1 验收复跑发现（Lead） |
+| D24 | 2026-11-03 | 流程运行数据（实例/待办/历史）由 M2c `scripts/seed-flow.ps1` 调 API 生成，不写 Flyway 种子；M1 仅校验 `wf_process_meta`/`wf_form` 静态种子 | ACT_* 由 Flowable 自建，直接插表不可控 | docs/01、docs/04 §6.3 |

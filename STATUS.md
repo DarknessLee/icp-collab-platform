@@ -2,7 +2,7 @@
 
 - **软件名称/版本**：企业内控与协同运营管理平台 V1.0（未发表）
 - **当前阶段**：M2d 协同运营（进行中）；M0、M1、M2a、M2b、M2c 已闭环
-- **最新 commit**：`M2C_COMMIT`（M2c 阶段提交，推送 origin/master 后由 docs 提交回填）；M2b 提交 `fa32065` + `34683e1`；M2a 提交 `7f11af8` + `3531d5c`；M1 提交 `1c9570a` + `6325b7a`
+- **最新 commit**：`e334734`（M2c 阶段提交，推送 origin/master 后由 docs 提交回填）；M2b 提交 `fa32065` + `34683e1`；M2a 提交 `7f11af8` + `3531d5c`；M1 提交 `1c9570a` + `6325b7a`
 - **远端**：`origin` → `http://192.168.1.100:3300/liyunqing/icp-collab-platform.git`（master 已推送）
 - **M2c 验收结论**：通过（详见 `docs/09-M2c-验收报告.md`）
   - Flowable 7.1.0 内嵌 + 6 条 BPMN（制度发布/缺陷整改/评价计划/文档借阅/采购/用印）；待办/已办/我发起/催办/监控/历史/bpmn-js 只读高亮全部可用；`POST /policies|evaluations|rectifies/{id}/submit` 已真实发起流程（D28 过渡消除）

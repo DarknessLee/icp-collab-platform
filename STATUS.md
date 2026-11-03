@@ -2,7 +2,7 @@
 
 - **软件名称/版本**：企业内控与协同运营管理平台 V1.0（未发表）
 - **当前阶段**：M0 立项 —— 文档已产出，等待用户确认 Q1–Q5
-- **最新 commit**：`ca47801` M0 初始提交（README/STATUS/DECISIONS/PLAN-MATRIX + docs/00–02 + 方案副本）
+- **最新 commit**：`777ec49`（M0 初始提交：README/STATUS/DECISIONS/PLAN-MATRIX + docs/00–02 + 方案副本；其后仅文案微调）
 - **最新安装包**：不适用（B/S Web，本地启动与 Compose 交付）
 - **最近验收**：无（M0 不写代码；环境探测结论见 docs/02 §1）
 - **未完成/暂缓**：

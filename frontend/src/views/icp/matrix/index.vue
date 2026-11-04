@@ -98,7 +98,7 @@ function renderChart(): void {
   const data = coverageDistribution()
   const option: EChartsOption = {
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-    grid: { left: 8, right: 16, top: 24, bottom: 4, containLabel: true },
+    grid: { left: 8, right: 16, top: 36, bottom: 4, containLabel: true },
     xAxis: { type: 'category', data: data.map((item) => item.label), axisTick: { alignWithLabel: true } },
     yAxis: { type: 'value', name: '风险数', minInterval: 1, splitLine: { lineStyle: { type: 'dashed' } } },
     series: [

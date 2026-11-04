@@ -161,9 +161,9 @@ let chart: EChartsInstance | null = null
 
 function trendOption(data: DashboardTrend): EChartsOption {
   return {
-    grid: { left: 44, right: 44, top: 48, bottom: 32 },
+    grid: { left: 48, right: 56, top: 64, bottom: 32, containLabel: true },
     tooltip: { trigger: 'axis' },
-    legend: { data: ['新增制度', '新增缺陷', '流程平均耗时'], top: 8, right: 12 },
+    legend: { data: ['新增制度', '新增缺陷', '流程平均耗时'], top: 8, left: 'center', itemWidth: 14, itemHeight: 10 },
     xAxis: { type: 'category', data: data.labels, boundaryGap: true },
     yAxis: [
       { type: 'value', name: '数量', minInterval: 1 },

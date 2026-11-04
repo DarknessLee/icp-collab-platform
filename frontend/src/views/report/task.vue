@@ -33,7 +33,7 @@ function renderCharts(): void {
   if (chartRef.value) {
     if (!chart) chart = echarts.init(chartRef.value)
     const option: EChartsOption = {
-      grid: { left: 52, right: 24, top: 30, bottom: 44 },
+      grid: { left: 52, right: 24, top: 46, bottom: 44, containLabel: true },
       tooltip: { trigger: 'axis' },
       xAxis: {
         type: 'category',
@@ -63,9 +63,9 @@ function renderCharts(): void {
   if (monthChartRef.value) {
     if (!monthChart) monthChart = echarts.init(monthChartRef.value)
     const option: EChartsOption = {
-      grid: { left: 48, right: 24, top: 36, bottom: 40 },
+      grid: { left: 48, right: 44, top: 62, bottom: 40, containLabel: true },
       tooltip: { trigger: 'axis' },
-      legend: { top: 6 },
+      legend: { top: 8, left: 'center', itemWidth: 14, itemHeight: 10 },
       xAxis: { type: 'category', data: report.byMonth.map((item) => item.month) },
       yAxis: [
         { type: 'value', name: '小时' },

@@ -50,7 +50,7 @@ function renderChart(): void {
   if (!data || !chartRef.value) return
   if (!chart) chart = echarts.init(chartRef.value)
   const option: EChartsOption = {
-    grid: { left: 44, right: 20, top: 30, bottom: 70 },
+    grid: { left: 44, right: 20, top: 46, bottom: 70, containLabel: true },
     tooltip: { trigger: 'axis' },
     xAxis: {
       type: 'category',

@@ -53,7 +53,7 @@ function handleSelect(path: string): void {
         <template v-for="item in menus" :key="item.id">
           <el-sub-menu v-if="isDirectoryMenu(item)" :index="`group-${item.id}`">
             <template #title>
-              <el-icon><component :is="resolveIcon(item.icon)" /></el-icon>
+              <el-icon class="menu-icon"><component :is="resolveIcon(item.icon)" /></el-icon>
               <span>{{ item.name }}</span>
             </template>
             <el-menu-item
@@ -61,12 +61,12 @@ function handleSelect(path: string): void {
               :key="child.id"
               :index="normalizePath(child.path)"
             >
-              <el-icon><component :is="resolveIcon(child.icon)" /></el-icon>
+              <el-icon class="menu-icon"><component :is="resolveIcon(child.icon)" /></el-icon>
               <template #title>{{ child.name }}</template>
             </el-menu-item>
           </el-sub-menu>
           <el-menu-item v-else :index="normalizePath(item.path)">
-            <el-icon><component :is="resolveIcon(item.icon)" /></el-icon>
+            <el-icon class="menu-icon"><component :is="resolveIcon(item.icon)" /></el-icon>
             <template #title>{{ item.name }}</template>
           </el-menu-item>
         </template>
@@ -149,6 +149,30 @@ function handleSelect(path: string): void {
 
 .sidebar-menu {
   border-right: none;
+}
+
+/* 菜单图标：显式给定盒模型，避免主题/浏览器差异下 el-icon 尺寸塌陷导致“图标不显示” */
+.sidebar-menu :deep(.el-icon.menu-icon) {
+  display: inline-flex;
+  flex: 0 0 18px;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-right: 10px;
+  font-size: 18px;
+  line-height: 18px;
+  color: inherit;
+}
+
+.sidebar-menu :deep(.el-icon.menu-icon svg) {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.sidebar-menu.el-menu--collapse :deep(.el-icon.menu-icon) {
+  margin-right: 0;
 }
 
 .sidebar-menu:not(.el-menu--collapse) {

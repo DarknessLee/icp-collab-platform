@@ -49,9 +49,9 @@ function renderDefectChart(): void {
   if (!chart) chart = echarts.init(chartRef.value)
   const statuses = gradeStatus.value
   const option: EChartsOption = {
-    grid: { left: 44, right: 20, top: 44, bottom: 40 },
+    grid: { left: 44, right: 20, top: 62, bottom: 40, containLabel: true },
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-    legend: { top: 8 },
+    legend: { top: 8, left: 'center', itemWidth: 14, itemHeight: 10 },
     xAxis: { type: 'category', data: gradeSeverity.value.map(severityText) },
     yAxis: { type: 'value', name: '缺陷数', minInterval: 1 },
     series: statuses.map((item, index) => ({
@@ -75,9 +75,9 @@ function renderRateChart(): void {
   if (!rectify.value || !rateChartRef.value) return
   if (!rateChart) rateChart = echarts.init(rateChartRef.value)
   const option: EChartsOption = {
-    grid: { left: 44, right: 20, top: 40, bottom: 36 },
+    grid: { left: 44, right: 44, top: 62, bottom: 36, containLabel: true },
     tooltip: { trigger: 'axis' },
-    legend: { top: 6 },
+    legend: { top: 8, left: 'center', itemWidth: 14, itemHeight: 10 },
     xAxis: { type: 'category', data: rectify.value.byMonth.map((item) => item.month) },
     yAxis: [
       { type: 'value', name: '数量', minInterval: 1 },

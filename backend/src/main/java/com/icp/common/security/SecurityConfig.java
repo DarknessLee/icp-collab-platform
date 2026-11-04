@@ -40,7 +40,9 @@ public class SecurityConfig {
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html",
-            "/error"
+            "/error",
+            // SSE：EventSource 无法携带 Authorization 头，改由 ?access_token= 手工校验（M2d D36）
+            "/api/v1/messages/stream"
     };
 
     private final ObjectMapper objectMapper;

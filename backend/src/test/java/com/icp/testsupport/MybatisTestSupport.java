@@ -2,6 +2,15 @@ package com.icp.testsupport;
 
 import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
+import com.icp.collab.entity.CollDoc;
+import com.icp.collab.entity.CollDocBorrow;
+import com.icp.collab.entity.CollDocCategory;
+import com.icp.collab.entity.CollDocPerm;
+import com.icp.collab.entity.CollMessage;
+import com.icp.collab.entity.CollNotice;
+import com.icp.collab.entity.CollSchedule;
+import com.icp.collab.entity.CollTask;
+import com.icp.collab.entity.CollTaskComment;
 import com.icp.system.entity.SysConfig;
 import com.icp.system.entity.SysDept;
 import com.icp.system.entity.SysDictData;
@@ -41,7 +50,10 @@ public final class MybatisTestSupport {
         List<Class<?>> entities = List.of(
                 SysUser.class, SysDept.class, SysRole.class, SysMenu.class, SysUserRole.class,
                 SysRoleMenu.class, SysOperLog.class, SysLoginLog.class, SysPost.class,
-                SysDictType.class, SysDictData.class, SysConfig.class, SysJob.class, SysFile.class);
+                SysDictType.class, SysDictData.class, SysConfig.class, SysJob.class, SysFile.class,
+                CollTask.class, CollTaskComment.class, CollMessage.class, CollDoc.class,
+                CollDocCategory.class, CollDocPerm.class, CollDocBorrow.class, CollNotice.class,
+                CollSchedule.class);
         for (Class<?> entity : entities) {
             TableInfoHelper.initTableInfo(assistant, entity);
         }

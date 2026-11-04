@@ -166,6 +166,42 @@ const staticPageRoutes: RouteRecordRaw[] = [
     name: 'WorkflowBorrow',
     component: () => import('@/views/workflow/borrow/index.vue'),
     meta: { title: '文档借阅', permAny: ['workflow:borrow:list', 'workflow:borrow:add', 'coll:doc:borrow'] }
+  },
+  {
+    path: 'coll/task',
+    name: 'CollabTask',
+    component: () => import('@/views/collab/task/index.vue'),
+    meta: { title: '任务管理', permAny: ['collab:task:list', 'collab:task:get'] }
+  },
+  {
+    path: 'coll/doc',
+    name: 'CollabDoc',
+    component: () => import('@/views/collab/doc/index.vue'),
+    meta: { title: '文档中心', permAny: ['collab:doc:list', 'collab:doc:get'] }
+  },
+  {
+    path: 'coll/doc-borrow',
+    name: 'CollabDocBorrow',
+    component: () => import('@/views/collab/doc/borrow.vue'),
+    meta: { title: '文档借阅', permAny: ['collab:borrow:list', 'collab:borrow:get'] }
+  },
+  {
+    path: 'coll/notice',
+    name: 'CollabNotice',
+    component: () => import('@/views/collab/notice/index.vue'),
+    meta: { title: '公告通知', permAny: ['collab:notice:list', 'collab:notice:get'] }
+  },
+  {
+    path: 'coll/schedule',
+    name: 'CollabSchedule',
+    component: () => import('@/views/collab/schedule/index.vue'),
+    meta: { title: '日程会议', permAny: ['collab:schedule:list', 'collab:schedule:get'] }
+  },
+  {
+    path: 'coll/message',
+    name: 'CollabMessage',
+    component: () => import('@/views/collab/message/index.vue'),
+    meta: { title: '消息中心', permAny: ['collab:message:list', 'collab:message:get'] }
   }
 ]
 

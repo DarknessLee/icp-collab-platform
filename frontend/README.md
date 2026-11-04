@@ -256,6 +256,39 @@ CSV 导出文件名（UTF-8 BOM 已验证，清单见 `shots\m2b\csv-filenames.t
 - 借阅申请需 `coll_doc` 中已存在文档 ID，前端暂以「文档 ID」输入 + 说明提示，M3 文档中心开放后替换为文档选择器。
 
 
+## M2d 协同运营（前端 mock 联调完成，真实后端待就绪）
+
+状态：2026-11-03，M2d 前端六页已按 docs/03 §6/§6.1、docs/04 DDL、DECISIONS D36/D37/D38 实现，`npm run build` 通过（vue-tsc 0 错误），Playwright mock 冒烟 **43/43 PASS**（console/pageerror 0）。后端 collab 模块尚未部署，当前以 dev-only mock 联调，待 Lead 通知「接口就绪」后重登 6 角色跑真实回归。
+
+### 页面与能力
+
+| 菜单 | 页面 | 主要能力 |
+| --- | --- | --- |
+| 任务管理 | `views/collab/task/index.vue` | 状态/优先级/仅逾期/只看我的/关键词筛选；新建/编辑（任务类型 1 计划/2 任务/3 子任务、优先级 1 高/2 中/3 低、负责人、计划起止、提醒时间）；开始/完成/取消；子任务；评论抽屉；手动提醒；删除；CSV 导出 |
+| 文档中心 | `views/collab/doc/index.vue` | 分类树（新增分类）+ 文档列表；上传（FileUpload）、编辑、发布、归档、删除；下载 blob；权限抽屉按 `target_type 0 全员/1 角色/2 用户/3 部门` + `perm_type 1 查看/2 下载/3 编辑` 多行三元组维护，PUT 全量覆盖 |
+| 文档借阅 | `views/collab/doc/borrow.vue` | 列表/详情；发起借阅（选择已发布文档 + 起止日期 + 事由）；已通过可下载；「归还」按申请本人或 ADMIN 显示（无独立权限串） |
+| 公告通知 | `views/collab/notice/index.vue` | 未读 badge；状态/仅未读/关键词筛选；新建/编辑（noticeType 1 通知/2 公告/3 制度宣贯、scope 全员/部门/角色 + scopeDeptIds/scopeRoles）；发布/关闭/删除；查看即已读 |
+| 消息中心 | `views/collab/message/index.vue` | 类型（1 系统/2 审批/3 任务/4 公告/5 预警）、阅读状态筛选；勾选批量已读/全部已读；SSE 实时（顶部「实时连接中/重连中」，新消息通知 + 未读数刷新）；`messageType=3 && bizType=REMIND` 显示「任务提醒」 |
+| 日程会议 | `views/collab/schedule/index.vue` | 月历（42 格、今日高亮、每格最多 3 条 + N）、列表；新建/编辑（类型 1 会议/2 提醒/3 日程、起止、地点）；取消（status=3）；标签 0 待开始/1 进行中/2 已结束/3 已取消 |
+
+### 契约落实要点
+
+- 任务写入映射 `title → taskTitle`；文档 `title → docName`、`summary → description`；公告 `title → noticeTitle`；日程 `title → scheduleTitle`、`type → scheduleType`；返回侧防御映射兼容 DDL 字段名。
+- 文档下载校验：已发布 → 权限命中 → 该文档审批通过借阅单兜底；40300 前端提示「无下载权限，可发起借阅后下载」。
+- SSE：`EventSource` 携带 `access_token`（不打印 token），断线静默指数退避 1s/2s/4s…上限 30s，不产生 console error。
+- 权限全部走 `v-perm` / `useUserStore().hasPermission()`，不硬编码角色；路由 `meta.permAny` 命中任一即可访问，无权限由守卫跳 403。
+
+### mock 回归与截图
+
+- 脚本：`D:\MyCodes\.smoke-frontend\m2d-mock-smoke.mjs`（Playwright 全量拦截 `/api/v1/**`）→ **43/43 PASS**。
+- 截图：`D:\MyCodes\.smoke-frontend\shots\m2d\`：`mock-task-list.png`、`mock-doc-list.png`、`mock-doc-perms-drawer.png`、`mock-borrow-list.png`、`mock-notice-list.png`、`mock-message-list.png`、`mock-message-403.png`、`mock-schedule-month.png`。
+- 构建：`npm run build` exit 0，vue-tsc 0 错误，vite 约 13s（element-plus 840.00kB / echarts 535.87kB / bpmn 140.08kB / vendor 354.24kB）。
+
+### 待真实后端回归
+
+- 6 角色菜单/403 矩阵、任务全链（新建→开始→完成/取消、子任务、评论、提醒）、文档上传→发布→权限→下载→归档、借阅申请→审批→通过→下载→归还、公告发布→已读/未读数、消息 SSE 实时 + 批量已读、日程月历/取消。
+- 截图产出到 `shots\m2d\`（final-* 最终版），并回填本 README。
+
 ## M1 范围与未联调项
 
 - 已完成：登录页（真实后端联调通过）、主框架（侧栏/面包屑/用户下拉/多标签页/移动端抽屉）、登录守卫、按菜单动态注册占位路由、直接输入模块地址时补注册路由（避免刷新 404）、`v-perm` 按钮权限、工作台统计卡片与 2 张 ECharts 图、403/404。

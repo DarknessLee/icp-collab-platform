@@ -1,4 +1,4 @@
-# 决策记录
+﻿# 决策记录
 
 > 一行一条；影响架构/验收的必须写；后续不重复讨论；与 docs/00 同步。
 > 待用户确认的决策标注「待确认」，确认后改为「用户确认」。
@@ -41,8 +41,11 @@
 | D34 | 2026-11-03 | 消解 D28：制度/评价计划 `submit` 改为真实发起流程并返回 `{pendingWorkflow:false, processInstanceId, taskId, businessNo}`；审批通过由流程回调推进单据状态（制度→生效、计划→执行中） | 保持旧字段兼容前端；状态推进从「前端二次调用」变为「引擎回调」，符合方案真实审批闭环 | M2c 设计（Lead） |
 | D35 | 2026-11-03 | M2c 运行数据由 `scripts/seed-flow.ps1` 经 REST 生成（60 实例/40 待办/20 催办），不直写 `ACT_*`、不写 Flyway；脚本幂等（重复执行不翻倍） | 与 D24 一致；保证任意环境可重建同构演示数据；失败退出非 0 | M2c 设计（Lead） |
 
+| D36 | 2026-11-03 | 站内信实时推送采用 SSE（`GET /messages/stream?access_token=<JWT>`，EventSource 无法带自定义 header；心跳 30s，每用户最多 3 连接，前端指数退避重连） | 不引入 WebSocket 服务与额外依赖；token 走 query 需在日志与审计中脱敏；M2d 内网/单机足够 | M2d 设计（Lead） |
+| D37 | 2026-11-03 | 文档访问控制用 `coll_doc_perm`（全员/部门/角色/用户四类，含 can_view/can_download），下载校验顺序：已发布 → 权限命中 → 已通过借阅单兜底 → 40300；权限全量覆盖写入 | 满足方案「文档中心权限」与流程借阅联动；暂不实现历史版本文件与在线预览（二期） | M2d 设计（Lead） |
+| D38 | 2026-11-03 | M2d 数据权限映射：任务按 assignee/creator/dept，文档按 dept/owner+perm 表，公告按 dept/role_code，日程按 owner/dept，消息按 user_id；统一复用 `@DataScope` 与本人维度 | 与 M2a/M2b 一致，避免各模块自造过滤；越权详情统一 40300 | M2d 设计（Lead） |
+
 ## 备注
 
 - 状态取值统一使用：已实现 / 部分 / 暂缓 / 不做（见 STATUS/PLAN-MATRIX）。
 - 本文件只在有「影响全局边界」的决策时追加；阶段内小决策写进对应验收报告偏差段。
-

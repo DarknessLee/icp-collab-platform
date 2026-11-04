@@ -1,8 +1,8 @@
-# 当前状态
+﻿# 当前状态
 
 - **软件名称/版本**：企业内控与协同运营管理平台 V1.0（未发表）
 - **当前阶段**：M3 全量验收与 E2E（进行中）；M0、M1、M2a、M2b、M2c、M2d、M2e 已闭环
-- **最新 commit**：M2e 阶段提交待记录（`M2E_COMMIT`）；M2d 提交 `f57c831` + `804047a`（远端恢复后已补推）；M2c `e334734` + `fc97f14`；M2b `fa32065` + `34683e1`；M2a `7f11af8` + `3531d5c`；M1 `1c9570a` + `6325b7a`
+- **最新 commit**：M2e 提交 `c4668ed`（feat(m2e)）；M2d 提交 `f57c831` + `804047a`（远端恢复后已补推）；M2c `e334734` + `fc97f14`；M2b `fa32065` + `34683e1`；M2a `7f11af8` + `3531d5c`；M1 `1c9570a` + `6325b7a`
 - **远端**：`origin` → `http://192.168.1.100:3300/liyunqing/icp-collab-platform.git`（master 跟踪 origin/master）
 - **M2e 验收结论**：通过（详见 `docs/11-M2e-验收报告.md`）
   - 交付：`/dashboard/summary|trend`、报表 6 端点（icp-coverage/risk-distribution/rectify-rate/process-duration/defects/tasks）、`/alerts` + `/alerts/count`、`/jobs` lastRunTime/lastResult + 真实 run；5 个定时 handler（制度到期/评价任务逾期/任务提醒/缺陷超期/公告定时发布）进程内 `@Scheduled` 10min 扫描
@@ -29,3 +29,4 @@
 - **已知限制**：Redis/MinIO 以 Caffeine+本地存储替代；Docker Compose 仅交付文件不本机实测；自定义数据权限（5）暂缓；流程仅一级审批（无加签/转办/在线设计器）且含「发起」节点需发起人确认（docs/10 §7.1）；矩阵唯一键与逻辑删除冲突（docs/08 §8）；文档可见性非 ADMIN 仅创建人/授权/借阅三种来源；SSE 单实例内存注册；定时器不解析 cronExpression、lastRunTime 为进程内状态；报表为实时聚合
 - **阅读入口**：README → STATUS → DECISIONS → PLAN-MATRIX → 当前阶段 docs（M3：docs/01 §3、docs/03、docs/04、docs/05、docs/11 §10）
 - **更新时间**：2026-11-04
+

@@ -2,7 +2,7 @@
 
 - **软件名称/版本**：企业内控与协同运营管理平台 V1.0（未发表）
 - **当前阶段**：**M4 交付（已闭环）；M0–M4 全部完成**，一期范围交付完毕（M5 软著材料按 D11 暂缓）
-- **最新 commit**：M3 `5ad3d03`（+ 回填 `46033bc`）；M2e `c4668ed` + `088415f`；M2d `f57c831` + `804047a`；M2c `e334734` + `fc97f14`；M2b `fa32065` + `34683e1`；M2a `7f11af8` + `3531d5c`；M1 `1c9570a` + `6325b7a`
+- **最新 commit**：M4 `12bef3e`（feat(m4)：Compose 11 文件、start-local/backup/restore/check-docs、env 化配置、docs/13–16）；M3 `5ad3d03`（+ 回填 `46033bc`）；M2e `c4668ed` + `088415f`；M2d `f57c831` + `804047a`；M2c `e334734` + `fc97f14`；M2b `fa32065` + `34683e1`；M2a `7f11af8` + `3531d5c`；M1 `1c9570a` + `6325b7a`
 - **远端**：`origin` → `http://192.168.1.100:3300/liyunqing/icp-collab-platform.git`（master 跟踪 origin/master）
 - **交付入口**：`scripts\start-local.ps1` → 浏览器 `http://127.0.0.1:4173`（演示账号 `admin` 等，密码 `Icp@2026`）；一键复现演示态 `scripts\demo-reset.ps1`
 - **M4 验收结论**：通过（详见 `docs/16-M4-交付验收报告.md`）

@@ -2,7 +2,7 @@
 
 > 覆盖「制度 → 风险 → 控制矩阵 → 内控评价 → 缺陷整改」闭环，融合审批流、协同任务、文档与运营看板的企业内控一体化平台。
 
-- **当前阶段**：M4 交付（M0、M1、M2a、M2b、M2c、M2d、M2e、M3 已闭环，见 [STATUS.md](STATUS.md)）
+- **当前阶段**：**M4 交付（已闭环，M0–M4 全部完成）**，一期范围交付完毕（M5 软著材料按 D11 暂缓，见 [STATUS.md](STATUS.md)）
 - **版本**：V1.0（未发表）
 - **产品形态**：B/S Web，前后端分离，浏览器访问（PC 优先，响应式兼容移动浏览器）
 - **远端仓库**：`http://192.168.1.100:3300/liyunqing/icp-collab-platform.git`（Gitea 私有，master）
@@ -33,15 +33,15 @@
 
 ```powershell
 cd D:\MyCodes\icp-collab-platform
-powershell -ExecutionPolicy Bypass -File scripts\mysql-init.ps1      # 首次：初始化项目内 3307 实例
-powershell -ExecutionPolicy Bypass -File scripts\demo-reset.ps1      # 一键重置到演示态（重建库+种子+seed-flow，约 40–45s）
-powershell -ExecutionPolicy Bypass -File scripts\start-backend.ps1   # 后端 :8080
-powershell -ExecutionPolicy Bypass -File scripts\dev-frontend.ps1    # 前端 dev :5173
+powershell -ExecutionPolicy Bypass -File scripts\start-local.ps1       # 一键：MySQL 3307 + 后端 8080 + 前端预览 4173（冷启动约 46s，重跑幂等）
+powershell -ExecutionPolicy Bypass -File scripts\demo-reset.ps1        # 可选：重置到演示态（60/40/20，约 40–45s）
 ```
 
-- 访问 `http://127.0.0.1:5173`（或构建后预览 `http://127.0.0.1:4173`），演示账号：`admin`（系统管理员）、`icpadmin`（内控管理员）、`auditor`（审计员）、`exec`（管理层）、`dept01`–`dept06`（部门负责人）、`staff01`–`staff20`（普通员工），密码统一 `Icp@2026`。
+- 访问 `http://127.0.0.1:4173`（一键启动即打开预览；开发模式用 `scripts\dev-frontend.ps1` → 5173），演示账号：`admin`（系统管理员）、`icpadmin`（内控管理员）、`auditor`（审计员）、`exec`（管理层）、`dept01`–`dept06`（部门负责人）、`staff01`–`staff20`（普通员工），密码统一 `Icp@2026`。
 - 后端健康检查：`http://127.0.0.1:8080/actuator/health`；Swagger：`/swagger-ui/index.html`。
-- 停止：`scripts/stop-backend.ps1`、`scripts/mysql-stop.ps1`。
+- 停止：`scripts\stop-local.ps1`（加 `-WithDb` 连 MySQL 一起停）。
+- 备份/恢复：`scripts\backup.ps1` → `scripts\restore.ps1 -Path <备份目录>`（实测 1.1s / 16.7s，附件与数据完整回滚）。
+- Docker 部署：见 [`deploy/README.md`](deploy/README.md) 与 [docs/13 部署与运维手册](docs/13-部署与运维手册.md)（Compose 为交付件，本机无 Docker 未实测）。
 
 ## 验收命令（可串行复跑）
 
@@ -50,7 +50,8 @@ powershell -ExecutionPolicy Bypass -File scripts\build.ps1        # 后端 170 t
 powershell -ExecutionPolicy Bypass -File scripts\test-api.ps1 -Reset   # 全量 API 375 例（约 152s）
 powershell -ExecutionPolicy Bypass -File scripts\test-e2e.ps1     # Playwright E2E 23 passed（约 47s）
 powershell -ExecutionPolicy Bypass -File scripts\screenshots.ps1 -Take  # 重新采集 28 张截图（-Take 才采集）
-powershell -ExecutionPolicy Bypass -File scripts\verify.ps1       # 一键全链路（约 317s，PASS）
+powershell -ExecutionPolicy Bypass -File scripts\check-docs.ps1   # 文档一致性（PASS=16）
+powershell -ExecutionPolicy Bypass -File scripts\verify.ps1       # 一键全链路（约 248–318s，PASS）
 ```
 
 > 运行顺序约束：`m2a/m2b` 必须在 `db-reset` 后、`seed-flow` 之前（m2b 有精确计数断言）；`m2e` 需单独 clean seed；E2E 与截图必须在 `demo-reset` 之后。
@@ -63,9 +64,10 @@ icp-collab-platform/
 │  └─ src/main/resources/   # db/migration（V1 schema 42 表 / V2 seed_base / V3 seed_business）+ processes/（6 条 BPMN）
 ├─ frontend/                # Vue3 + Vite：登录、主框架、工作台、系统管理 9 页、内控 7 页、流程中心 9 页、协同 6 页、报表 5 页
 ├─ e2e/                     # Playwright：E01–E14 用例 + screenshots.spec.ts + fixtures
-├─ scripts/                 # mysql-init/start/stop、db-reset、db-validate、demo-reset、build、start/stop-backend、dev-frontend、
-│                           # test-api(-m2a…m2e)、test-e2e、screenshots、seed-flow、verify
-├─ docs/                    # 00 画像、01 阶段计划、02 差距风险、03 契约、04 数据模型与种子、05 权限矩阵、06–12 验收报告、screenshots/
+├─ scripts/                 # start-local/stop-local、backup/restore、demo-reset、build、test-api(-m2a…m2e)、test-e2e、
+│                           # screenshots、seed-flow、check-docs、verify
+├─ docs/                    # 00 画像、01 阶段计划、02 差距风险、03 契约、04 数据模型与种子、05 权限矩阵、06–16 验收报告、
+│                           # 13 部署运维、14 用户手册、15 软著清单、screenshots/
 ├─ .runtime/                # 本地 MySQL 数据、附件、日志（gitignore）
 ├─ deploy/                  # Docker Compose、Nginx、初始化与备份脚本（M4 交付）
 ├─ STATUS.md / DECISIONS.md / PLAN-MATRIX.md
@@ -81,8 +83,9 @@ icp-collab-platform/
 5. [docs/01-阶段计划与验收口径.md](docs/01-阶段计划与验收口径.md) —— 阶段门禁、E2E 用例、截图清单与验收命令
 6. [docs/02-方案差距表与风险.md](docs/02-方案差距表与风险.md) —— 差距、假设、风险、已确认问题
 7. [docs/03-接口契约.md](docs/03-接口契约.md)、[docs/04-数据模型与种子.md](docs/04-数据模型与种子.md)、[docs/05-权限矩阵.md](docs/05-权限矩阵.md) —— 冻结契约
-8. 验收报告：[docs/06-M1](docs/06-M1-验收报告.md)、[docs/07-M2a](docs/07-M2a-验收报告.md)、[docs/08-M2b](docs/08-M2b-验收报告.md)、[docs/09-M2c](docs/09-M2c-验收报告.md)、[docs/10-M2d](docs/10-M2d-验收报告.md)、[docs/11-M2e](docs/11-M2e-验收报告.md)、[docs/12-M3](docs/12-M3-验收报告.md)
-9. [docs/screenshots/INDEX.md](docs/screenshots/INDEX.md) —— 28 张最终截图索引
+8. 验收报告：[docs/06-M1](docs/06-M1-验收报告.md)、[docs/07-M2a](docs/07-M2a-验收报告.md)、[docs/08-M2b](docs/08-M2b-验收报告.md)、[docs/09-M2c](docs/09-M2c-验收报告.md)、[docs/10-M2d](docs/10-M2d-验收报告.md)、[docs/11-M2e](docs/11-M2e-验收报告.md)、[docs/12-M3](docs/12-M3-验收报告.md)、[docs/16-M4 交付验收](docs/16-M4-交付验收报告.md)
+9. 交付文档：[docs/13 部署与运维](docs/13-部署与运维手册.md)、[docs/14 用户手册](docs/14-用户手册.md)、[docs/15 软著材料清单](docs/15-软著材料清单.md)
+10. [docs/screenshots/INDEX.md](docs/screenshots/INDEX.md) —— 28 张最终截图索引
 
 ## 交付边界（一期）
 

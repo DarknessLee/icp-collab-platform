@@ -1,0 +1,144 @@
+# =============================================================================
+# 企业内控与协同运营管理平台 V1.0 - Docker Compose 部署文件（仅交付，未在本机实测：
+# 本机无 Docker。服务名/端口/健康检查/env 与 backend/src/main/resources/application.yml
+# 的 ${ENV:default} 占位一一对应，详见 deploy/README.md 的「配置对应关系」。
+#
+# 用法：
+#   cp .env.example .env      # 按需修改口令
+#   docker compose up -d --build
+#   docker compose ps         # 等 backend/frontend 变 healthy
+# =============================================================================
+name: icp-platform
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: icp-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-icp_platform}
+      MYSQL_USER: ${APP_DB_USER:-icp_app}
+      MYSQL_PASSWORD: ${APP_DB_PASSWORD:?set APP_DB_PASSWORD in .env}
+      TZ: Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_general_ci
+      - --default-time-zone=+08:00
+      - --lower-case-table-names=1
+    ports:
+      - "${MYSQL_PORT:-13307}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    networks: [icp-net]
+
+  redis:
+    # 预留组件：当前后端使用进程内 Caffeine（CacheService 接口），本容器不参与业务；
+    # 保留以便二期切换到真实 Redis 时无需改部署结构。
+    image: redis:7-alpine
+    container_name: icp-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks: [icp-net]
+
+  minio:
+    # 预留组件：当前后端使用本地磁盘 FileStorage（local-root），MinIO 为二期对象存储预留。
+    image: minio/minio:latest
+    container_name: icp-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-icpminio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD in .env}
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/minio/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    networks: [icp-net]
+
+  backend:
+    build:
+      context: ..
+      dockerfile: deploy/docker/backend.Dockerfile
+    image: icp-platform-backend:1.0
+    container_name: icp-backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: container
+      SERVER_PORT: 8080
+      # application.yml: spring.datasource.url/username/password
+      DB_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-icp_platform}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true
+      DB_USERNAME: ${APP_DB_USER:-icp_app}
+      DB_PASSWORD: ${APP_DB_PASSWORD:?set APP_DB_PASSWORD in .env}
+      # application.yml: icp.jwt.secret（必须是 base64 HMAC key）
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      # application.yml: icp.storage.local-root（挂载持久卷）
+      STORAGE_ROOT: /app/data/files
+      # application.yml: app.cors.allowed-origins（同源经 Nginx 反代时可不改）
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
+      TZ: Asia/Shanghai
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    ports:
+      - "${BACKEND_PORT:-8081}:8080"
+    volumes:
+      - app-files:/app/data/files
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    networks: [icp-net]
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: deploy/docker/frontend.Dockerfile
+    image: icp-platform-frontend:1.0
+    container_name: icp-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:80/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    networks: [icp-net]
+
+volumes:
+  mysql-data:
+  redis-data:
+  minio-data:
+  app-files:
+
+networks:
+  icp-net:
+    driver: bridge

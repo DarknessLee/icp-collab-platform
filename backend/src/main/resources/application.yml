@@ -1,5 +1,6 @@
 server:
-  port: 8080
+  # M4: overridable in containers, default keeps the local 8080 behaviour
+  port: ${SERVER_PORT:8080}
   servlet:
     encoding:
       charset: UTF-8
@@ -8,8 +9,9 @@ server:
 
 app:
   cors:
-    # 逗号分隔的允许源；默认覆盖 Vite dev (5173) 与 preview (4173)
-    allowed-origins: http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173
+    # Comma separated allowed origins; defaults cover Vite dev (5173) and preview (4173).
+    # M4: override with CORS_ORIGINS in containers behind Nginx.
+    allowed-origins: ${CORS_ORIGINS:http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173}
 
 spring:
   application:
@@ -24,6 +26,14 @@ spring:
     multipart:
       max-file-size: 50MB
       max-request-size: 100MB
+  # M4: container-friendly datasource placeholders. The local profile
+  # (application-local.yml) keeps its exact 127.0.0.1:3307 values, so the
+  # default local behaviour is unchanged.
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL:jdbc:mysql://127.0.0.1:3307/icp_platform?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:icp_app}
+    password: ${DB_PASSWORD:Icp@2026}
 
 flowable:
   database-schema-update: true
@@ -67,7 +77,8 @@ springdoc:
 
 icp:
   jwt:
-    secret: aWNwLXBsYXRmb3JtLWRlbW8tc2VjcmV0LWtleS0yMDI2LXNwcmluZy1ib290LWp3dC1oczI1Ng==
+    # M4: override JWT_SECRET in deployments (must stay a base64 HMAC key).
+    secret: ${JWT_SECRET:aWNwLXBsYXRmb3JtLWRlbW8tc2VjcmV0LWtleS0yMDI2LXNwcmluZy1ib290LWp3dC1oczI1Ng==}
     access-ttl-seconds: 7200
     refresh-ttl-seconds: 604800
     issuer: icp-platform
@@ -75,7 +86,8 @@ icp:
     max-fail-count: 5
     lock-minutes: 15
   storage:
-    local-root: ../.runtime/files
+    # Relative to the backend working directory; compose maps a persistent volume.
+    local-root: ${STORAGE_ROOT:../.runtime/files}
 
 logging:
   level:

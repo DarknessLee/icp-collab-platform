@@ -4,6 +4,13 @@
 
 $pidFile = Join-Path $RuntimeDir 'backend.pid'
 
+# Kill a process tree without letting taskkill write to stderr: in PS 5.1 a
+# missing/already-dead pid would surface as a NativeCommandError and abort the
+# caller under $ErrorActionPreference='Stop'.
+function Kill-Tree([int]$ProcessId) {
+    $null = cmd.exe /c ('taskkill /PID ' + $ProcessId + ' /T /F 2>nul')
+}
+
 if (-not (Test-LocalPort -Port $BackendPort)) {
     Write-Step "Backend is not running on port $BackendPort (nothing to do)"
     if (Test-Path $pidFile) { Remove-Item $pidFile -Force -ErrorAction SilentlyContinue }
@@ -18,7 +25,7 @@ if (Test-Path $pidFile) {
 
 if ($pidValue) {
     Write-Step "Stopping backend process tree (pid=$pidValue) ..."
-    & taskkill.exe /PID $pidValue /T /F 2>&1 | Out-Null
+    Kill-Tree $pidValue
 } else {
     Write-Step "No pid file found, resolving listener on port $BackendPort ..."
 }
@@ -31,7 +38,9 @@ function Stop-AgentsOnPort {
         $parts = ($line.ToString() -split '\s+') | Where-Object { $_ -ne '' }
         $listenerPid = $parts[$parts.Count - 1]
         if ($listenerPid -match '^\d+$') {
-            & taskkill.exe /PID ([int]$listenerPid) /T /F 2>&1 | Out-Null
+            if (Get-Process -Id ([int]$listenerPid) -ErrorAction SilentlyContinue) {
+                Kill-Tree ([int]$listenerPid)
+            }
         }
     }
 }
@@ -46,7 +55,7 @@ for ($i = 0; $i -lt 10; $i++) {
 $leftovers = Get-CimInstance Win32_Process -Filter "Name='java.exe'" -ErrorAction SilentlyContinue |
     Where-Object { $_.CommandLine -and $_.CommandLine.Contains('com.icp.IcpPlatformApplication') }
 foreach ($proc in $leftovers) {
-    & taskkill.exe /PID $proc.ProcessId /T /F 2>&1 | Out-Null
+    Kill-Tree ([int]$proc.ProcessId)
 }
 
 $deadline = (Get-Date).AddSeconds(30)

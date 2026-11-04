@@ -37,21 +37,21 @@
 | 合同/采购/费用业务插件 | 未开始（二期） | — | — | 暂缓 |
 | K8s/Helm、Prometheus/Grafana/Loki、GitLab CI | 未开始（二期，目录 M4 预留） | — | docs/10 | 暂缓 |
 | 真实 Redis / MinIO / 消息队列 | 进程内 Caffeine + 本地存储替代，接口已留（D06/D07） | 缓存/存储类已实现 | docs/00、docs/10 | 暂缓 |
-| Docker Compose 一键部署 | 文件待 M4 交付；本机无 Docker 不实测 | 待 M4 | deploy/、docs/10 | 部分 |
-| 本地一键启动（MySQL 3307 + 后端 + 前端） | 分步脚本已实现（mysql-start/db-reset/start-backend/dev-frontend）；一键 start-local 待 M4 | 脚本实测通过 | docs/10 | 部分 |
-| 备份/恢复脚本与一次恢复演练 | 待 M4 | 待 M4 | docs/10 | 部分 |
+| Docker Compose 一键部署 | 已交付 `deploy/` 11 文件（Compose 五服务 + Nginx + Dockerfile + MySQL init + deploy/backup/restore）；本机无 Docker 未实测（D04/Q1） | 静态检查；env 覆盖实测（18080 健康 + login code=0） | deploy/README、docs/13 §5 | 已实现（交付件未本机拉起） |
+| 本地一键启动（MySQL 3307 + 后端 + 前端） | 已完成：`scripts/start-local.ps1` / `stop-local.ps1` | start-local 16.4s（幂等 0.5s）、本机冷启动 45.9s；stop-local -WithDb 6.7s | docs/13 §4、docs/16 §4 | 已实现 |
+| 备份/恢复脚本与一次恢复演练 | 已完成：`backup.ps1`（mysqldump + 附件 + manifest sha256） / `restore.ps1` | 备份 1.1s → 破坏 → 恢复 16.7s：db-validate 15/15、policy 40/task 80/files 137 全恢复 | docs/13 §8、docs/16 §4 | 已实现 |
 | 60 页源码/60 页手册/申请表（M5） | 一期不做（用户确认 Q3） | — | docs/15 | 暂缓 |
 
 ## 二、验收场景（方案 §九）
 
 | 验收场景 | 当前实现 | 测试/证据 | 文档位置 | 状态 |
 | --- | --- | --- | --- | --- |
-| ① 30 分钟一键部署（本地等效） | 分步脚本 + `verify.ps1` 全链路 317.5s 可复现（build→reset→test-api→reset→test-e2e）；`start-local` 一键与 Compose 交付待 M4 | docs/12 §4 实测命令表 | docs/10、docs/12 | 部分 |
+| ① 30 分钟一键部署（本地等效） | 已实现：`start-local` 一键（冷启动 45.9s）+ `verify.ps1` 全链路（`-SkipE2E -SkipShots` 248.8s / 完整 317.5s）；Compose 交付件未实测 | docs/16 §4 命令表、docs/12 §4 | docs/13、docs/16 | 已实现（Compose 部分） |
 | ② 登录 / 菜单 / 数据权限 | 登录/菜单/按钮/数据权限已实测 6 角色 + 临时 dataScope=2 角色 | Lead 57/57 ×3；前端 84/84、dataScope 10/10 | docs/05、docs/07 | 已实现 |
 | ③ 内控闭环（制度→…→复核关闭） | 已实现：制度发布→风险/控制→矩阵→评价计划/任务/底稿→缺陷→整改→复核关闭全链路页面前后端打通（submit 过渡 pendingWorkflow，M2c 接 Flowable） | 前端 52/52 闭环 + Lead API 探针；icpadmin 全链路实测 | docs/03、docs/08 | 已实现 |
 | ④ 审批待办 / 催办 / 留痕 | 已实现：6 条流程可发起→同意/驳回→完成，待办/已办/我发起隔离，催办落库+消息，历史与高亮可查 | 后端 70/70；Lead 77/77 ×3；前端 173/173；截图 shots\m2c | docs/09、docs/03 §5.1 | 已实现 |
 | ⑤ 审计可查可追溯 | 操作/登录/变更三类可查 + traceId 追溯；日志哈希链属等保增强，一期不做（M4 文档标注） | Lead 57/57（A27–A30）；auditor 三 tab 前端 7/7；E14 PASS | docs/03、docs/07、docs/12 | 已实现 |
-| ⑥ 备份恢复演练 | 待 M4 | 待 M4 | docs/10、docs/09 | 部分 |
+| ⑥ 备份恢复演练 | 已实现：备份→破坏（改制度/删任务/删附件）→恢复→校验全通过 | 备份 1.1s / 恢复 16.7s；db-validate 15/15、附件 137 全回 | docs/13 §8、docs/16 §4 | 已实现 |
 
 ## 三、交付物
 
@@ -69,8 +69,10 @@
 | 内控业务 7 页（M2b） | 已完成（制度/风险/控制点/矩阵/评价+任务/缺陷/整改，真实后端，含 CSV 导出） | 前端 87/18/52；后端 96 单测；test-api-m2b 47/47 | docs/08 | 已实现 |
 | 流程中心 9 页（M2c） | 已完成（待办/已办/我发起/监控/实例/定义/采购/用印/借阅 + 详情抽屉 + bpmn 高亮） | 前端 69/55/28/21；verify-m2c 77/77 ×3 | docs/09 | 已实现 |
 | 协同运营 6 页（M2d） | 已完成（任务/文档/借阅/公告/消息 SSE/日程月历 + 权限抽屉） | verify-m2d 44/44；test-api-m2d 109/109；前端 mock 43/43 | docs/10 | 已实现 |
-| 各阶段验收报告 | M1–M3 报告已完成（docs/06–12）；M4 报告待阶段结束 | docs/06–12 实际命令与数字（M4 报告编号 docs/13–15） | docs/06–12 | 部分 |
+| 各阶段验收报告 | M1–M4 报告全部完成（docs/06–12 + docs/16） | 各报告含实际命令与数字 | docs/06–12、docs/16 | 已实现 |
 | E2E 套件（Playwright）与验收脚本（M3） | 已完成：`e2e/` E01–E14 + screenshots.spec（24 tests / 15 files）；`scripts/demo-reset/test-api/test-e2e/screenshots/build/verify` | test-e2e 23 passed / 1 skipped / 0 failed；verify 全链路 PASS 317.5s | docs/12、e2e/README 模板 | 已实现 |
 | 最终截图（≥25 张） | 已完成（M3）：`docs/screenshots/` S01–S28（28 张 1440×900，s28 窄屏）+ INDEX.md，附种子数字 | `screenshots.ps1` 校验 PASS（28 PNG ≥ 25） | docs/screenshots、docs/12 §6 | 已实现 |
-| 部署运维手册 / 用户手册 | 待 M4 | 待 M4 | docs/13、docs/14 | 部分 |
+| 部署运维手册 / 用户手册 / 软著清单 | 已完成（M4）：docs/13（13 章）、docs/14（10 章）、docs/15（结构与映射） | 人工核对 + `check-docs` PASS=16 | docs/13、docs/14、docs/15 | 已实现 |
+| 文档一致性门禁（check-docs） | 已完成：编号/H1/相对链接/名称版本/STATUS commit/28 截图/INDEX 全覆盖 | `check-docs.ps1` PASS=16 FAIL=0 | docs/16 §4、scripts/check-docs.ps1 | 已实现 |
+| M4 交付验收报告 | 已完成：`docs/16-M4-交付验收报告.md`（10 节） | 命令结果表 13 项 + 6 场景对照 | docs/16 | 已实现 |
 

@@ -7,23 +7,32 @@
 #   demo-reset.ps1       (again) demo state for the E2E run
 #   test-e2e.ps1         Playwright suite (skipped when e2e\ is missing)
 #   screenshots.ps1      validate docs\screenshots >= 25 PNG (with -WithShots)
-#   check-docs           optional docs gate (skipped when not provided)
+#   check-docs.ps1       docs/docs numbering/link/name/version/screenshot gate
 #
 # Fails fast: the first failing step stops the chain with a fix hint.
 #
 # Usage:
 #   powershell -NoProfile -ExecutionPolicy Bypass -File scripts\verify.ps1
 #   ... -SkipBuild        # reuse current artifacts
-#   ... -SkipE2e          # backend-only verification
+#   ... -SkipE2E          # backend-only verification (alias: -SkipE2e)
+#   ... -SkipE2e          #   same switch, legacy spelling kept for scripts
+#   ... -SkipShots        # do not validate docs\screenshots even with -WithShots
 #   ... -WithShots        # also capture + validate screenshots
 #   ... -SkipM2e          # skip the M2e phase inside test-api.ps1
+#   ... -SkipDocs         # skip the check-docs gate
 # ---------------------------------------------------------------------------
 param(
     [switch]$SkipBuild,
-    [switch]$SkipE2e,
+    [switch]$SkipE2E,
+    [switch]$SkipShots,
     [switch]$WithShots,
-    [switch]$SkipM2e
+    [switch]$SkipM2e,
+    [switch]$SkipDocs
 )
+
+# Parameters are case-insensitive in PowerShell, so the legacy spelling
+# "-SkipE2e" keeps working against the canonical -SkipE2E switch.
+$SkipE2e = $SkipE2E
 
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\_env.ps1"
@@ -109,20 +118,29 @@ if (-not $failed -and $e2eReady -and -not $SkipE2e) {
     if (-not $ok) { $failed = $true }
 }
 
-if (-not $failed -and $WithShots -and $e2eReady) {
+if (-not $failed -and $WithShots -and $e2eReady -and -not $SkipShots) {
     $ok = Invoke-Step 'screenshots (docs\screenshots >= 25 PNG)' 'screenshots.ps1' @() 'Re-run with -Take in demo state; inspect docs\screenshots.'
     if (-not $ok) { $failed = $true }
+} elseif ($SkipShots) {
+    Write-Step 'verify: screenshots validation SKIPPED (-SkipShots)'
+    $script:steps += [pscustomobject]@{ Step = 'screenshots'; Exit = 0; Seconds = 0; Skipped = $true }
 }
 
-# ------------------------------ 5. docs gate (optional) ------------------------------
+# ------------------------------ 5. docs gate ------------------------------
 if (-not $failed) {
-    $docsScript = Join-Path $PSScriptRoot 'check-docs.ps1'
-    if (Test-Path $docsScript) {
-        $ok = Invoke-Step 'check-docs' 'check-docs.ps1' @() 'Fix docs/ per check-docs output.'
-        if (-not $ok) { $failed = $true }
-    } else {
-        Write-Step 'verify: check-docs SKIPPED (scripts\check-docs.ps1 not delivered yet - M4)'
+    if ($SkipDocs) {
+        Write-Step 'verify: check-docs SKIPPED (-SkipDocs)'
         $script:steps += [pscustomobject]@{ Step = 'check-docs'; Exit = 0; Seconds = 0; Skipped = $true }
+    } else {
+        $docsScript = Join-Path $PSScriptRoot 'check-docs.ps1'
+        if (-not (Test-Path $docsScript)) {
+            Write-Host 'VERIFY FAILED at step: check-docs (scripts\check-docs.ps1 not delivered)'
+            Write-Host 'FIX HINT: deliver scripts\check-docs.ps1 (M4 docs gate).'
+            $failed = $true
+        } else {
+            $ok = Invoke-Step 'check-docs' 'check-docs.ps1' @() 'Fix docs/ per check-docs output.'
+            if (-not $ok) { $failed = $true }
+        }
     }
 }
 

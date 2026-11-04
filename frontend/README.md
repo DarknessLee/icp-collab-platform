@@ -81,7 +81,7 @@ src/
 
 ## 真实后端联调结果（2026-11-03）
 
-环境：后端 `http://127.0.0.1:8080`（health UP）+ MySQL 3307；前端 `npm run dev` → `http://127.0.0.1:5173`（`/api` 代理到 8080）。Playwright 全流程回归脚本位于仓库外 `D:\MyCodes\.smoke-frontend\real-smoke.mjs`，截图输出到 `D:\MyCodes\.smoke-frontend\shots\`。账号密码统一 `Icp@2026`，菜单与权限以登录接口实际返回为准。
+环境：后端 `http://127.0.0.1:8080`（health UP）+ MySQL 3307；前端 `npm run dev` → `http://127.0.0.1:5173`（`/api` 代理到 8080）。Playwright 全流程回归脚本位于 `.runtime\artifacts\.smoke-frontend\real-smoke.mjs`，截图输出到 `.runtime\artifacts\.smoke-frontend\shots\`。账号密码统一 `Icp@2026`，菜单与权限以登录接口实际返回为准。
 
 后端权限种子已按 `docs/05-权限矩阵.md` 重做（db-reset 后回归），各角色实际数据：
 
@@ -126,7 +126,7 @@ src/
 
 覆盖页面：`/system/dept`、`/system/post`、`/system/user`、`/system/role`、`/system/menu`、`/system/dict`、`/system/config`、`/system/log`、`/system/job`、`/profile`；通用组件 `FileUpload`（`POST /files`，DEV 下可用 `/dev/upload` 自测页，生产构建不包含）。
 
-验收环境：后端 8080（MySQL 3307，种子 105 菜单 / 281 role_menu）+ 前端 5173（`npm run dev`）；Playwright 脚本均在仓库外 `D:\MyCodes\.smoke-frontend\`。
+验收环境：后端 8080（MySQL 3307，种子 105 菜单 / 281 role_menu）+ 前端 5173（`npm run dev`）；Playwright 脚本均在 `.runtime\artifacts\.smoke-frontend\`。
 
 ### 回归结果
 
@@ -151,7 +151,7 @@ src/
 | dept01 | 系统管理不可见，直访 9 页均 403 | 无 `system:*` 权限 |
 | staff01 | 系统管理不可见，直访 9 页均 403 | 个人中心仍可访问 |
 
-### 截图（`D:\MyCodes\.smoke-frontend\shots\m2a\`）
+### 截图（`.runtime\artifacts\.smoke-frontend\shots\m2a\`）
 
 - 页面证据：`system-dept-admin.png`、`system-post-admin.png`、`system-user-admin.png`、`system-role-admin.png`、`system-menu-admin.png`、`system-dict-admin.png`、`system-config-admin.png`、`system-log-admin.png`、`system-job-admin.png`、`profile-admin.png`
 - 授权/权限：`system-role-assign-admin.png`（菜单授权抽屉，105 节点）、`system-log-auditor.png`（三 tab）、`system-role-403-icpadmin.png` 等 `system-*-403-<role>.png`
@@ -180,7 +180,7 @@ src/
 - 评价：计划新增/编辑/提交审批/开始（生成任务）/完成/关闭/删除草稿；任务开始、底稿处理（评分、结论、抽样/测试过程、测试结果、证据附件、底稿结论）、底稿查看。
 - 缺陷：登记/编辑/详情/发起整改/关闭；整改：编辑计划、提交证据（附件+完成日期+说明）、复核通过/驳回、关闭。
 
-### 回归结果（Playwright，仓库外 `D:\MyCodes\.smoke-frontend\`）
+### 回归结果（Playwright，`.runtime\artifacts\.smoke-frontend\`）
 
 | 用例集 | 脚本 | 结果 |
 | --- | --- | --- |
@@ -203,7 +203,7 @@ CSV 导出文件名（UTF-8 BOM 已验证，清单见 `shots\m2b\csv-filenames.t
 | dept01（DEPT_MANAGER） | 制度/缺陷可写，风险/控制点/矩阵/评价只读，无导出 | 6 / 6 / 4 / 0（均本部门） |
 | staff01（EMPLOYEE） | 制度只读；缺陷/整改仅本人参与；风险/控制点/矩阵/评价 403 | 2 / 2 / 2（/risks、越权详情返回 40300） |
 
-### 截图（`D:\MyCodes\.smoke-frontend\shots\m2b\`）
+### 截图（`.runtime\artifacts\.smoke-frontend\shots\m2b\`）
 
 - 页面：`policy-admin/icpadmin/auditor/dept01/staff/exec.png`、`risk-*.png`、`control-*.png`、`matrix-*.png`、`evaluation-*`、`defect-*.png`、`rectify-*.png`
 - 关键证据：`policy-published.png`、`matrix-coverage-admin.png`（40项/40项/0项/100%）、`matrix-duplicate-warning.png`、`evaluation-submit.png`（底稿处理）、`evaluation-task-submit.png`、`rectify-submit-dialog.png`、`rectify-approved.png`、`defect-closed.png`、`policy-dept01.png`、`defect-staff.png`、`risk-403-staff.png`
@@ -232,10 +232,10 @@ CSV 导出文件名（UTF-8 BOM 已验证，清单见 `shots\m2b\csv-filenames.t
 
 | 脚本 | 用例 | 结果 |
 | --- | --- | --- |
-| `D:\MyCodes\.smoke-frontend\m2c-real-pages.mjs` | 6 角色 × 9 页面访问/按钮/403 | **69/69 PASS** |
-| `D:\MyCodes\.smoke-frontend\m2c-real-flow.mjs` | 采购发起→审批→完成、用印驳回→重提、催办、bpmn 高亮、监控/实例/定义、403 | **55/55 PASS** |
-| `D:\MyCodes\.smoke-frontend\m2c-real-extra.mjs` | 采购驳回→重提→完成、文档借阅发起→审批→完成 | **28/28 PASS** |
-| `D:\MyCodes\.smoke-frontend\m2c-final-shots.mjs` | 最终截图与页面复核 | **21/21 PASS** |
+| `.runtime\artifacts\.smoke-frontend\m2c-real-pages.mjs` | 6 角色 × 9 页面访问/按钮/403 | **69/69 PASS** |
+| `.runtime\artifacts\.smoke-frontend\m2c-real-flow.mjs` | 采购发起→审批→完成、用印驳回→重提、催办、bpmn 高亮、监控/实例/定义、403 | **55/55 PASS** |
+| `.runtime\artifacts\.smoke-frontend\m2c-real-extra.mjs` | 采购驳回→重提→完成、文档借阅发起→审批→完成 | **28/28 PASS** |
+| `.runtime\artifacts\.smoke-frontend\m2c-final-shots.mjs` | 最终截图与页面复核 | **21/21 PASS** |
 
 非预期 console/pageerror = 0；`npm run build` exit 0（vue-tsc 0 错误，vite 12.49s；element-plus 839.99 kB / echarts 535.87 kB / bpmn 140.08 kB / vendor 354.24 kB）。
 
@@ -245,7 +245,7 @@ CSV 导出文件名（UTF-8 BOM 已验证，清单见 `shots\m2b\csv-filenames.t
 
 本轮创建的业务单（供验收后 reset）：CG-2026-022、CG-2026-031、CG-2026-032（采购），YY-2026-017（用印），借阅单 3394（docId 3301）。另有 Lead 验收脚本生成的 `Lead verify *` 单据（CG-2026-023~030、YY-2026-014~016、借阅 3391~3393）。
 
-### 截图（`D:\MyCodes\.smoke-frontend\shots\m2c\`）
+### 截图（`.runtime\artifacts\.smoke-frontend\shots\m2c\`）
 
 最终批次：`final-todo-form.png`、`final-todo-history.png`、`final-todo-diagram.png`、`final-{todo,done,initiated,monitor,instance,definition,purchase,seal,borrow}-icpadmin.png`、`final-monitor-admin.png`、`final-instance-admin.png`、`final-monitor-403-staff01.png`；回归批次：`{todo,done,initiated,monitor,purchase,seal,borrow}-{icpadmin,admin,auditor,exec,dept01,staff01}.png`、`purchase-submit-form`、`seal-submit-form`、`borrow-submit-form`、`flow-approve-drawer-*`、`flow-reject-drawer-*`、`flow-diagram-staff01`、`flow-initiated-running/completed/rejected`、`flow-resubmitted`。
 
@@ -280,8 +280,8 @@ CSV 导出文件名（UTF-8 BOM 已验证，清单见 `shots\m2b\csv-filenames.t
 
 ### mock 回归与截图
 
-- 脚本：`D:\MyCodes\.smoke-frontend\m2d-mock-smoke.mjs`（Playwright 全量拦截 `/api/v1/**`）→ **43/43 PASS**。
-- 截图：`D:\MyCodes\.smoke-frontend\shots\m2d\`：`mock-task-list.png`、`mock-doc-list.png`、`mock-doc-perms-drawer.png`、`mock-borrow-list.png`、`mock-notice-list.png`、`mock-message-list.png`、`mock-message-403.png`、`mock-schedule-month.png`。
+- 脚本：`.runtime\artifacts\.smoke-frontend\m2d-mock-smoke.mjs`（Playwright 全量拦截 `/api/v1/**`）→ **43/43 PASS**。
+- 截图：`.runtime\artifacts\.smoke-frontend\shots\m2d\`：`mock-task-list.png`、`mock-doc-list.png`、`mock-doc-perms-drawer.png`、`mock-borrow-list.png`、`mock-notice-list.png`、`mock-message-list.png`、`mock-message-403.png`、`mock-schedule-month.png`。
 - 构建：`npm run build` exit 0，vue-tsc 0 错误，vite 约 13s（element-plus 840.00kB / echarts 535.87kB / bpmn 140.08kB / vendor 354.24kB）。
 
 ### 待真实后端回归
@@ -314,12 +314,12 @@ CSV 导出文件名（UTF-8 BOM 已验证，清单见 `shots\m2b\csv-filenames.t
 ### 真实回归与截图
 
 - 脚本（均在真实后端 8080 + dev server 5173 上运行）：
-  - `D:\MyCodes\.smoke-frontend\m2e-real-pages.mjs` → **126/126 PASS**：6 角色重登，工作台 8 卡可见；侧栏「报表中心」与 `report:*` 一致；5 报表页有权限显示标题/表格/无 NaN、无权限跳 `/403`；console/pageerror 0。
-  - `D:\MyCodes\.smoke-frontend\m2e-real-consistency.mjs` → **47/47 PASS**：W01 summary 8 卡逐项相等；W02 覆盖率 100.0%/7 部门/8 分类；W03 dim=level 40/12/18/10、category 8 类、dept 7 类；W04 缺陷 30/整改率 40.0%/筛选 重大+已关闭=4；W05 tasks total/状态计数/逾期与 API 相等、6 流程 p95≥avg；W06 预警 4 卡 5/0/6/0=11、列表 total 一致、制度到期空态、高风险缺陷有数据；trend months=1/12 边界；rate 1 位小数；console/pageerror 0。
-  - `D:\MyCodes\.smoke-frontend\m2e-real-shots.mjs`：staff01 直访 `/report/alert` → `/403`、预警 4 tab 与空态截图。
+  - `.runtime\artifacts\.smoke-frontend\m2e-real-pages.mjs` → **126/126 PASS**：6 角色重登，工作台 8 卡可见；侧栏「报表中心」与 `report:*` 一致；5 报表页有权限显示标题/表格/无 NaN、无权限跳 `/403`；console/pageerror 0。
+  - `.runtime\artifacts\.smoke-frontend\m2e-real-consistency.mjs` → **47/47 PASS**：W01 summary 8 卡逐项相等；W02 覆盖率 100.0%/7 部门/8 分类；W03 dim=level 40/12/18/10、category 8 类、dept 7 类；W04 缺陷 30/整改率 40.0%/筛选 重大+已关闭=4；W05 tasks total/状态计数/逾期与 API 相等、6 流程 p95≥avg；W06 预警 4 卡 5/0/6/0=11、列表 total 一致、制度到期空态、高风险缺陷有数据；trend months=1/12 边界；rate 1 位小数；console/pageerror 0。
+  - `.runtime\artifacts\.smoke-frontend\m2e-real-shots.mjs`：staff01 直访 `/report/alert` → `/403`、预警 4 tab 与空态截图。
 - 6 角色权限快照（真实后端）：admin 95（report 6）、icpadmin 137（6）、auditor 62（6）、exec 60（6）、dept01 104（6）、staff01 51（0，仅 dashboard 两项）；staff01 报表菜单不显示、5 个 `/report/*` 全部 403。
 - 关键数字（干净种子基线，admin 直调 API 与页面逐项相等）：制度 40/有效 30、风险 40/高 12、覆盖率 100.0%（40/40）、缺陷 30/未关闭 20、整改 25/已通过 10/40.0%、任务 total 80（0:8 / 1:12 / 2:60 / 3:0，逾期 5）、预警 5/0/6/0=11。
-- 截图：`D:\MyCodes\.smoke-frontend\shots\m2e\` 共 43 张 `real-*.png`（干净基线 2026-11-04 10:10–10:14）：`real-dashboard-{6 角色}.png`、`real-{overview,policy,defect,task,alert}-{5 角色}.png`、`real-consistency-*.png`、`real-alert-tab-{task-overdue,policy-expiring,defect-high-risk,process-overdue}.png`、`real-403-staff.png`、`real-empty-alert.png`，以及 mock 阶段 `m2e-*.png`。
+- 截图：`.runtime\artifacts\.smoke-frontend\shots\m2e\` 共 43 张 `real-*.png`（干净基线 2026-11-04 10:10–10:14）：`real-dashboard-{6 角色}.png`、`real-{overview,policy,defect,task,alert}-{5 角色}.png`、`real-consistency-*.png`、`real-alert-tab-{task-overdue,policy-expiring,defect-high-risk,process-overdue}.png`、`real-403-staff.png`、`real-empty-alert.png`，以及 mock 阶段 `m2e-*.png`。
 - 构建：`npm run build` exit 0，vue-tsc 0 错误，vite 12.75s（element-plus 840.00kB / echarts 535.87kB / bpmn 140.08kB / vendor 354.24kB）。
 
 ## M1 范围与未联调项

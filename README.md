@@ -96,5 +96,6 @@ icp-collab-platform/
 ## 约定
 
 - 私有《软著 Demo 手册》不进入本仓库、不上传远端；仓库内只放项目自身文档与代码。
+- 开发期验收脚本、调试日志与过程截图统一归档在 `icp-collab-platform\.runtime\artifacts\`（`.runtime/` 已 gitignore，不随仓库分发，也不在上级工作目录残留）；交付用截图只在 `docs/screenshots/`。
 - 阶段门禁、验收命令与汇报格式见 [docs/01-阶段计划与验收口径.md](docs/01-阶段计划与验收口径.md)。
 - 源码统一 UTF-8；本机为 Windows PowerShell 5.1（无 pwsh7），仓库内脚本保持 ASCII、避免 PS7 语法；中文文件用编辑器/工具写入（勿用 shell 重定向，避免 BOM/GBK 乱码）。

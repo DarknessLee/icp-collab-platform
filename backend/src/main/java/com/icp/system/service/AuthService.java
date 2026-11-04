@@ -327,6 +327,7 @@ public class AuthService {
             node.setType(menu.getMenuType());
             node.setPerms(menu.getPerms());
             node.setOrderNum(menu.getOrderNum());
+            node.setVisible(menu.getVisible());
             nodes.put(menu.getId(), node);
         }
         List<MenuNode> roots = new ArrayList<>();
@@ -338,7 +339,22 @@ public class AuthService {
                 parent.getChildren().add(node);
             }
         }
-        return roots;
+        return filterVisible(roots);
+    }
+
+    /**
+     * 过滤 {@code sys_menu.visible=0} 的隐藏菜单（含其子树），避免隐藏节点下发到前端。
+     */
+    private List<MenuNode> filterVisible(List<MenuNode> nodes) {
+        List<MenuNode> visible = new ArrayList<>();
+        for (MenuNode node : nodes) {
+            if (node.getVisible() != null && node.getVisible() == 0) {
+                continue;
+            }
+            node.setChildren(filterVisible(node.getChildren()));
+            visible.add(node);
+        }
+        return visible;
     }
 
     private UserInfo toUserInfo(SysUser user) {

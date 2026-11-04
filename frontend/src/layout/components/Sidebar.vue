@@ -74,8 +74,8 @@ function handleSelect(path: string): void {
     </el-scrollbar>
 
     <div class="sidebar-footer">
-      <span v-if="!collapsed">M2d · 协同运营</span>
-      <span v-else>M2d</span>
+      <span v-if="!collapsed">V1.0 · 企业内控协同平台</span>
+      <span v-else>V1.0</span>
     </div>
   </aside>
 </template>

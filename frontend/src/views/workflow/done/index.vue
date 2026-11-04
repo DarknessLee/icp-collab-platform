@@ -71,7 +71,7 @@ onMounted(() => {
       </div>
 
       <el-table v-loading="loading" :data="list" border stripe row-key="taskId" empty-text="暂无已办任务">
-        <el-table-column label="标题" min-width="190" show-overflow-tooltip>
+        <el-table-column label="标题" min-width="300" show-overflow-tooltip>
           <template #default="{ row }">
             <el-link type="primary" :underline="false" @click="openDetail(row)">{{ row.title || '—' }}</el-link>
           </template>

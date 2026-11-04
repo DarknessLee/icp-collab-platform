@@ -66,14 +66,12 @@ export const ALL_MENUS: MenuItem[] = [
     icon: 'Share',
     type: 'M',
     children: [
-      { id: 40, parentId: 4, name: '表单管理', path: '/wf/form', icon: 'Document', type: 'C' },
       { id: 41, parentId: 4, name: '流程定义', path: '/wf/definition', icon: 'Share', type: 'C' },
       { id: 42, parentId: 4, name: '流程实例', path: '/wf/instance', icon: 'Connection', type: 'C' },
       { id: 43, parentId: 4, name: '我的待办', path: '/wf/todo', icon: 'Tickets', type: 'C' },
       { id: 44, parentId: 4, name: '我的已办', path: '/wf/done', icon: 'CircleCheck', type: 'C' },
       { id: 45, parentId: 4, name: '采购申请', path: '/wf/purchase', icon: 'Coin', type: 'C' },
-      { id: 46, parentId: 4, name: '用印申请', path: '/wf/seal', icon: 'Stamp', type: 'C' },
-      { id: 47, parentId: 4, name: '催办管理', path: '/wf/urge', icon: 'AlarmClock', type: 'C' }
+      { id: 46, parentId: 4, name: '用印申请', path: '/wf/seal', icon: 'Stamp', type: 'C' }
     ]
   },
   {

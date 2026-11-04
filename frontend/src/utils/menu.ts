@@ -18,6 +18,12 @@ export function isButtonMenu(item: MenuItem): boolean {
   return text === 'BUTTON' || text === 'F' || text === 'BTN'
 }
 
+/**
+ * 种子中 visible=0 的隐藏菜单兜底：登录响应目前未透出 visible 字段，
+ * 按契约路径兜底隐藏（40=表单管理 /wf/form，47=催办管理 /wf/urge）。
+ */
+const HIDDEN_MENU_PATHS = new Set(['/wf/form', '/wf/urge'])
+
 function isDirectoryType(type: MenuItem['type']): boolean {
   const text = String(type ?? '').toUpperCase()
   return type === 0 || type === '0' || text === 'DIR' || text === 'M' || text === 'DIRECTORY'
@@ -67,11 +73,13 @@ export function buildMenuTree(list: MenuItem[]): MenuItem[] {
   return roots
 }
 
-/** 过滤按钮与空目录，得到侧栏可渲染的菜单树 */
+/** 过滤按钮、隐藏菜单（visible=0）与空目录，得到侧栏可渲染的菜单树 */
 export function filterVisibleMenus(tree: MenuItem[]): MenuItem[] {
   const result: MenuItem[] = []
   tree.forEach((item) => {
     if (isButtonMenu(item)) return
+    if (item.visible === 0 || item.visible === '0') return
+    if (HIDDEN_MENU_PATHS.has(normalizePath(item.path))) return
     const children = filterVisibleMenus(item.children || [])
     if (!normalizePath(item.path) && children.length === 0) return
     result.push({ ...item, children })

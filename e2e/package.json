@@ -1,0 +1,15 @@
+{
+  "name": "icp-collab-platform-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "M3 E2E suite (Playwright) for icp-collab-platform",
+  "scripts": {
+    "e2e": "playwright test",
+    "e2e:shots": "node run-shots.mjs",
+    "e2e:list": "playwright test --list"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1"
+  }
+}

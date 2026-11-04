@@ -7,8 +7,11 @@ import com.icp.common.security.JwtTokenProvider;
 import com.icp.system.config.AuthProperties;
 import com.icp.system.dto.LoginRequest;
 import com.icp.system.dto.LoginResponse;
+import com.icp.system.dto.MenuNode;
 import com.icp.system.dto.RefreshTokenRequest;
 import com.icp.system.entity.SysDept;
+import com.icp.system.entity.SysMenu;
+import com.icp.system.entity.SysRole;
 import com.icp.system.entity.SysUser;
 import com.icp.system.mapper.SysDeptMapper;
 import com.icp.system.mapper.SysLoginLogMapper;
@@ -186,6 +189,50 @@ class AuthServiceTest {
         assertThat(response.getUser().getDeptName()).isEqualTo("信息技术部");
         assertThat(response.getPermissions()).isEmpty();
         assertThat(response.getMenus()).isEqualTo(List.of());
+    }
+
+    @Test
+    void loginMenuTreeFiltersInvisibleMenus() {
+        when(passwordEncoder.matches("Icp@2026", user.getPassword())).thenReturn(true);
+        SysRole role = new SysRole();
+        role.setId(2L);
+        role.setRoleCode("ICP_MANAGER");
+        when(roleMapper.selectByUserId(1L)).thenReturn(new ArrayList<>(List.of(role)));
+        SysMenu parent = menu(20L, 0L, "流程中心", "M", 1, null);
+        SysMenu hidden = menu(40L, 20L, "表单管理", "C", 0, "/wf/form");
+        SysMenu visible = menu(41L, 20L, "待办中心", "C", 1, "/wf/todo");
+        when(menuMapper.selectByRoleIds(any())).thenReturn(List.of(parent, hidden, visible));
+        when(cacheService.get(anyString())).thenReturn(Optional.empty());
+        when(tokenProvider.createAccessToken(eq(1L), eq("admin"), eq(8L), any(), any()))
+                .thenReturn("access-jwt");
+        when(tokenProvider.createRefreshToken(eq(1L), eq("admin"), any())).thenReturn("refresh-jwt");
+        when(tokenProvider.getAccessTtlSeconds()).thenReturn(7200L);
+        Claims claims = org.mockito.Mockito.mock(Claims.class);
+        when(tokenProvider.parse("access-jwt")).thenReturn(claims);
+        when(tokenProvider.getJti(claims)).thenReturn("jti-1");
+
+        LoginRequest request = new LoginRequest();
+        request.setUsername("admin");
+        request.setPassword("Icp@2026");
+        LoginResponse response = authService.login(request, null);
+
+        assertThat(response.getMenus()).hasSize(1);
+        MenuNode root = response.getMenus().get(0);
+        assertThat(root.getId()).isEqualTo(20L);
+        assertThat(root.getChildren()).extracting(MenuNode::getId).containsExactly(41L);
+        assertThat(root.getChildren().get(0).getVisible()).isEqualTo(1);
+    }
+
+    private static SysMenu menu(Long id, Long parentId, String name, String type, Integer visible, String path) {
+        SysMenu menu = new SysMenu();
+        menu.setId(id);
+        menu.setParentId(parentId);
+        menu.setMenuName(name);
+        menu.setMenuType(type);
+        menu.setVisible(visible);
+        menu.setPath(path);
+        menu.setOrderNum(1);
+        return menu;
     }
 }
 

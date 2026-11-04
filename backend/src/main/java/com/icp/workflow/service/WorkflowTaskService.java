@@ -181,6 +181,10 @@ public class WorkflowTaskService {
         data.put("processKey", link.getProcessKey());
         data.put("title", link.getTitle());
         data.put("businessNo", link.getBusinessNo());
+        data.put("businessType", link.getBusinessType());
+        data.put("processName", detail.get("processName"));
+        data.put("initiatorId", link.getInitiatorId());
+        data.put("initiatorName", userResolver.nameOf(link.getInitiatorId()));
         data.put("nodeName", task.getName());
         data.put("activityId", task.getTaskDefinitionKey());
         data.put("assignee", task.getAssignee());

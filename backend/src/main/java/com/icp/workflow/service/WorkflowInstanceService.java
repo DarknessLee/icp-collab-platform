@@ -3,6 +3,7 @@ package com.icp.workflow.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.icp.collab.mapper.CollDocMapper;
 import com.icp.common.api.ErrorCode;
 import com.icp.common.api.PageResult;
 import com.icp.common.cache.CacheService;
@@ -17,8 +18,11 @@ import com.icp.icp.mapper.IcpEvaluationMapper;
 import com.icp.icp.mapper.IcpPolicyMapper;
 import com.icp.icp.mapper.IcpRectifyMapper;
 import com.icp.icp.support.CodeSeq;
+import com.icp.icp.support.IcpLookupService;
+import com.icp.system.entity.SysDept;
 import com.icp.system.entity.SysFile;
 import com.icp.system.entity.SysUser;
+import com.icp.system.mapper.SysDeptMapper;
 import com.icp.system.mapper.SysFileMapper;
 import com.icp.system.mapper.SysUserMapper;
 import com.icp.system.service.ConfigService;
@@ -63,6 +67,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * 流程实例服务：发起、详情、历史、节点高亮、重新提交、我发起的（docs/03 §5 / §5.1）。
@@ -91,7 +96,10 @@ public class WorkflowInstanceService {
     private final IcpRectifyMapper rectifyMapper;
     private final IcpDefectMapper defectMapper;
     private final SysUserMapper sysUserMapper;
+    private final SysDeptMapper sysDeptMapper;
     private final SysFileMapper sysFileMapper;
+    private final IcpLookupService icpLookupService;
+    private final CollDocMapper collDocMapper;
     private final WorkflowUserResolver userResolver;
     private final WorkflowDefinitionService definitionService;
     private final DataScopeService dataScopeService;
@@ -113,7 +121,10 @@ public class WorkflowInstanceService {
                                    IcpRectifyMapper rectifyMapper,
                                    IcpDefectMapper defectMapper,
                                    SysUserMapper sysUserMapper,
+                                   SysDeptMapper sysDeptMapper,
                                    SysFileMapper sysFileMapper,
+                                   IcpLookupService icpLookupService,
+                                   CollDocMapper collDocMapper,
                                    WorkflowUserResolver userResolver,
                                    WorkflowDefinitionService definitionService,
                                    DataScopeService dataScopeService,
@@ -134,7 +145,10 @@ public class WorkflowInstanceService {
         this.rectifyMapper = rectifyMapper;
         this.defectMapper = defectMapper;
         this.sysUserMapper = sysUserMapper;
+        this.sysDeptMapper = sysDeptMapper;
         this.sysFileMapper = sysFileMapper;
+        this.icpLookupService = icpLookupService;
+        this.collDocMapper = collDocMapper;
         this.userResolver = userResolver;
         this.definitionService = definitionService;
         this.dataScopeService = dataScopeService;
@@ -444,15 +458,16 @@ public class WorkflowInstanceService {
         data.put("businessNo", link.getBusinessNo());
         data.put("title", link.getTitle());
         data.put("formCode", link.getFormCode());
-        data.put("formSchema", readJson(formSchema(link.getFormCode())));
-        data.put("formData", readJson(String.valueOf(readVariable(link.getProcessInstanceId(), WorkflowConstants.VAR_FORM_DATA, "{}"))));
+        FormDisplay form = displayForm(link);
+        data.put("formSchema", form.schema());
+        data.put("formData", form.data());
         data.put("status", link.getStatus());
         data.put("statusLabel", statusLabel(link.getStatus()));
         data.put("initiatorId", link.getInitiatorId());
         data.put("initiatorName", userResolver.nameOf(link.getInitiatorId()));
         data.put("startTime", link.getStartTime());
         data.put("endTime", link.getEndTime());
-        data.put("business", businessData(link));
+        data.put("business", form.business());
         Task current = currentTask(link.getProcessInstanceId());
         Map<String, Object> node = new LinkedHashMap<>();
         if (current != null) {
@@ -970,6 +985,257 @@ public class WorkflowInstanceService {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    // ------------------------------------------------------ 表单展示数据（ID -> 名称）
+
+    private record FormDisplay(Map<String, Object> schema, Map<String, Object> data, Object business) {
+    }
+
+    /**
+     * 详情中的表单展示数据：把 formData / business 里的原始数字 ID 解析成名称
+     * （部门 / 人员 / 缺陷编码 / 分类 / 附件 / 文档），并把展示字段补进 formSchema，
+     * 避免前端直接展示「部门 ID=7」「责任人 ID=23」「缺陷 ID=1720」。
+     */
+    private FormDisplay displayForm(WfBusinessLink link) {
+        Map<String, Object> schema = readObjectMap(formSchema(link.getFormCode()));
+        Map<String, Object> formData = readObjectMap(String.valueOf(
+                readVariable(link.getProcessInstanceId(), WorkflowConstants.VAR_FORM_DATA, "{}")));
+        List<Map<String, Object>> fields = new ArrayList<>();
+        Object schemaFields = schema.get("fields");
+        if (schemaFields instanceof Collection<?> collection) {
+            for (Object item : collection) {
+                if (item instanceof Map<?, ?> map) {
+                    Map<String, Object> copied = new LinkedHashMap<>();
+                    map.forEach((key, value) -> copied.put(String.valueOf(key), value));
+                    fields.add(copied);
+                }
+            }
+        }
+        displayFields(formData, fields);
+        Object business = displayBusiness(link, fields);
+        dedupeFields(fields);
+        Map<String, Object> displaySchema = new LinkedHashMap<>();
+        displaySchema.put("fields", fields);
+        return new FormDisplay(displaySchema, formData, business);
+    }
+
+    private void displayFields(Map<String, Object> data, List<Map<String, Object>> fields) {
+        addNamedField(data, fields, "deptId", "deptName", "部门", this::deptName);
+        addNamedField(data, fields, "ownerDeptId", "ownerDeptName", "归属部门", this::deptName);
+        addNamedField(data, fields, "evaluateDeptId", "evaluateDeptName", "评价部门", this::deptName);
+        addNamedField(data, fields, "applicantId", "applicantName", "申请人", userResolver::nameOf);
+        addNamedField(data, fields, "responsibleUserId", "responsibleUserName", "责任人", userResolver::nameOf);
+        addNamedField(data, fields, "assigneeId", "assigneeName", "办理人", userResolver::nameOf);
+        addNamedField(data, fields, "evaluatorId", "evaluatorName", "评价人", userResolver::nameOf);
+        addNamedField(data, fields, "discoverUserId", "discoverUserName", "发现人", userResolver::nameOf);
+        addNamedField(data, fields, "reviewUserId", "reviewUserName", "复核人", userResolver::nameOf);
+        addNamedField(data, fields, "reviewerId", "reviewerName", "复核人", userResolver::nameOf);
+        addNamedField(data, fields, "ownerUserId", "ownerUserName", "负责人", userResolver::nameOf);
+        addNamedField(data, fields, "borrowerId", "borrowerName", "借阅人", userResolver::nameOf);
+        addDefectCode(data, fields);
+        addFileName(data, fields);
+        addEvidenceNames(data, fields);
+        addDeptScopeNames(data, fields);
+        // 只展示编码/名称的关联字段，移除原始 ID，避免出现无标签的裸 ID。
+        for (String idKey : List.of("docId", "controlId", "riskId", "policyId", "taskId", "categoryId")) {
+            data.remove(idKey);
+        }
+    }
+
+    private Object displayBusiness(WfBusinessLink link, List<Map<String, Object>> fields) {
+        Object entity = businessData(link);
+        if (entity == null) {
+            return null;
+        }
+        Map<String, Object> business = objectMapper.convertValue(entity,
+                new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {
+                });
+        business.values().removeIf(value -> value == null);
+        if (business.containsKey("docId")) {
+            Long docId = longValue(business.get("docId"));
+            business.remove("docId");
+            if (docId != null) {
+                com.icp.collab.entity.CollDoc doc = collDocMapper.selectById(docId);
+                if (doc != null && doc.getDocName() != null) {
+                    business.put("docName", doc.getDocName());
+                    fields.add(displayField("docName", "文档"));
+                }
+            }
+        }
+        if (business.containsKey("categoryId")) {
+            Long categoryId = longValue(business.get("categoryId"));
+            business.remove("categoryId");
+            if (categoryId != null) {
+                Map<Long, String> names = WorkflowConstants.POLICY_PUBLISH.equals(link.getProcessKey())
+                        ? icpLookupService.policyCategoryNames(List.of(categoryId))
+                        : icpLookupService.riskCategoryNames(List.of(categoryId));
+                String name = names.get(categoryId);
+                if (name != null) {
+                    business.put("categoryName", name);
+                    fields.add(displayField("categoryName", "分类"));
+                }
+            }
+        }
+        displayFields(business, fields);
+        return business;
+    }
+
+    private void addNamedField(Map<String, Object> data, List<Map<String, Object>> fields,
+                               String idKey, String nameKey, String label, Function<Long, String> resolver) {
+        Long id = longValue(data.remove(idKey));
+        if (id == null) {
+            return;
+        }
+        String name = resolver.apply(id);
+        if (name == null || name.isBlank()) {
+            return;
+        }
+        data.put(nameKey, name);
+        fields.add(displayField(nameKey, label));
+    }
+
+    private void addDefectCode(Map<String, Object> data, List<Map<String, Object>> fields) {
+        Long defectId = longValue(data.remove("defectId"));
+        if (defectId == null) {
+            return;
+        }
+        IcpDefect defect = defectMapper.selectById(defectId);
+        if (defect == null || defect.getDefectCode() == null || defect.getDefectCode().isBlank()) {
+            return;
+        }
+        data.put("defectCode", defect.getDefectCode());
+        fields.add(displayField("defectCode", "缺陷编号"));
+    }
+
+    private void addFileName(Map<String, Object> data, List<Map<String, Object>> fields) {
+        Long fileId = longValue(data.remove("fileId"));
+        if (fileId == null) {
+            return;
+        }
+        SysFile file = sysFileMapper.selectById(fileId);
+        if (file == null) {
+            return;
+        }
+        String name = file.getOriginalName() == null || file.getOriginalName().isBlank()
+                ? file.getFileName() : file.getOriginalName();
+        if (name == null || name.isBlank()) {
+            return;
+        }
+        data.put("fileName", name);
+        fields.add(displayField("fileName", "附件"));
+    }
+
+    /** deptScope 存的是部门 ID CSV 或「全公司」，展示时解析为部门名称。 */
+    private void addDeptScopeNames(Map<String, Object> data, List<Map<String, Object>> fields) {
+        Object value = data.remove("deptScope");
+        if (value == null) {
+            return;
+        }
+        List<String> names = new ArrayList<>();
+        for (String part : String.valueOf(value).split(",")) {
+            String text = part.trim();
+            if (text.isEmpty()) {
+                continue;
+            }
+            Long deptId = longValue(text);
+            if (deptId == null) {
+                names.add(text);
+                continue;
+            }
+            String name = deptName(deptId);
+            if (name != null && !name.isBlank()) {
+                names.add(name);
+            }
+        }
+        if (!names.isEmpty()) {
+            data.put("deptScopeNames", String.join("、", names));
+            fields.add(displayField("deptScopeNames", "评价范围"));
+        }
+    }
+
+    /** evidence 存的是附件 ID CSV，展示时解析为文件名。 */
+    private void addEvidenceNames(Map<String, Object> data, List<Map<String, Object>> fields) {
+        Object value = data.remove("evidence");
+        if (value == null) {
+            return;
+        }
+        List<String> names = new ArrayList<>();
+        for (String part : String.valueOf(value).split(",")) {
+            Long fileId = longValue(part);
+            if (fileId == null) {
+                continue;
+            }
+            SysFile file = sysFileMapper.selectById(fileId);
+            if (file == null) {
+                continue;
+            }
+            String name = file.getOriginalName() == null || file.getOriginalName().isBlank()
+                    ? file.getFileName() : file.getOriginalName();
+            if (name != null && !name.isBlank()) {
+                names.add(name);
+            }
+        }
+        if (!names.isEmpty()) {
+            data.put("evidenceNames", String.join("、", names));
+            fields.add(displayField("evidenceNames", "佐证材料"));
+        }
+    }
+
+    private void dedupeFields(List<Map<String, Object>> fields) {
+        Set<String> seen = new java.util.LinkedHashSet<>();
+        fields.removeIf(field -> {
+            Object prop = field.get("prop");
+            if (prop == null) {
+                return false;
+            }
+            return !seen.add(String.valueOf(prop));
+        });
+    }
+
+    private Map<String, Object> displayField(String prop, String label) {
+        Map<String, Object> field = new LinkedHashMap<>();
+        field.put("prop", prop);
+        field.put("label", label);
+        field.put("type", "text");
+        return field;
+    }
+
+    private String deptName(Long deptId) {
+        SysDept dept = sysDeptMapper.selectById(deptId);
+        return dept == null ? null : dept.getDeptName();
+    }
+
+    private Long longValue(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        String text = String.valueOf(value).trim();
+        if (text.isEmpty()) {
+            return null;
+        }
+        try {
+            return Long.valueOf(text);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> readObjectMap(String json) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        JsonNode node = readJson(json);
+        if (node == null || !node.isObject()) {
+            return result;
+        }
+        Map<String, Object> parsed = objectMapper.convertValue(node, Map.class);
+        if (parsed != null) {
+            result.putAll(parsed);
+        }
+        return result;
     }
 
     public String toJson(Object value) {

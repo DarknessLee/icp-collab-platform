@@ -20,5 +20,7 @@ public class MenuNode {
     private String type;
     private String perms;
     private Integer orderNum;
+    /** 是否显示（1 显示 / 0 隐藏）；隐藏节点不会出现在菜单树中，前端可据此兜底。 */
+    private Integer visible;
     private List<MenuNode> children = new ArrayList<>();
 }

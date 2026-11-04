@@ -21,9 +21,9 @@ const filters = reactive({
   bizType: ''
 })
 
-const operState = usePageList<OperLogRow>(logApi.oper, { keyword: '', status: '', bizType: '' })
-const loginState = usePageList<LoginLogRow>(logApi.login, { keyword: '', status: '' })
-const changeState = usePageList<ChangeLogRow>(logApi.changes, { keyword: '', bizType: '' })
+const operState = usePageList<OperLogRow>(logApi.oper, { operName: '', status: '', bizType: '' })
+const loginState = usePageList<LoginLogRow>(logApi.login, { username: '', status: '' })
+const changeState = usePageList<ChangeLogRow>(logApi.changes, { bizType: '' })
 
 const tabVisible = computed(() => {
   const auditOnly = can('audit:log:view') && !can('system:log:oper')
@@ -37,22 +37,26 @@ const tabVisible = computed(() => {
 function fillQuery(): void {
   const [startDate = '', endDate = ''] = filters.dateRange || []
   const keyword = filters.keyword.trim()
+  const status = filters.status === '' ? undefined : filters.status
+  const bizType = filters.bizType.trim() || undefined
   if (activeTab.value === 'oper') {
-    operState.query.keyword = keyword
-    operState.query.status = filters.status
-    operState.query.bizType = filters.bizType.trim()
-    operState.query.startDate = startDate
-    operState.query.endDate = endDate
+    // 契约 docs/03 §8：操作日志筛选参数为 operName/module/status/startDate/endDate
+    operState.query.operName = keyword || undefined
+    operState.query.status = status
+    operState.query.bizType = bizType
+    operState.query.startDate = startDate || undefined
+    operState.query.endDate = endDate || undefined
   } else if (activeTab.value === 'login') {
-    loginState.query.keyword = keyword
-    loginState.query.status = filters.status
-    loginState.query.startDate = startDate
-    loginState.query.endDate = endDate
+    // 契约 docs/03 §8：登录日志筛选参数为 username/status/startDate/endDate
+    loginState.query.username = keyword || undefined
+    loginState.query.status = status
+    loginState.query.startDate = startDate || undefined
+    loginState.query.endDate = endDate || undefined
   } else {
-    changeState.query.keyword = keyword
-    changeState.query.bizType = filters.bizType.trim()
-    changeState.query.startDate = startDate
-    changeState.query.endDate = endDate
+    // 契约 docs/03 §8：变更日志筛选参数为 bizType/bizId/startDate/endDate
+    changeState.query.bizType = bizType
+    changeState.query.startDate = startDate || undefined
+    changeState.query.endDate = endDate || undefined
   }
 }
 
@@ -155,9 +159,10 @@ onMounted(() => {
 
       <div class="filter-bar">
         <el-input
+          v-if="activeTab !== 'change'"
           v-model="filters.keyword"
           class="filter-input"
-          placeholder="用户名 / 操作人"
+          :placeholder="activeTab === 'login' ? '用户名' : '操作人'"
           clearable
           @keyup.enter="search"
         />

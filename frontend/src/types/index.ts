@@ -32,6 +32,8 @@ export interface MenuItem {
   path: string
   icon?: string
   type?: number | string
+  /** 0=隐藏（后端菜单 visible 字段），隐藏项不参与侧栏与路由注册 */
+  visible?: number | string
   children?: MenuItem[]
 }
 

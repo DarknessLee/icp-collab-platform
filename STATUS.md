@@ -2,7 +2,7 @@
 
 - **软件名称/版本**：企业内控与协同运营管理平台 V1.0（未发表）
 - **当前阶段**：M4 交付（进行中）；M0、M1、M2a、M2b、M2c、M2d、M2e、M3 已闭环
-- **最新 commit**：M3 提交 `M3_COMMIT`（feat(m3)：Playwright E2E、28 张最终截图、验收脚本六件套、CORS/审计/隐藏菜单/详情名称化/种子文案修复）；M2e `c4668ed` + `088415f`；M2d `f57c831` + `804047a`；M2c `e334734` + `fc97f14`；M2b `fa32065` + `34683e1`；M2a `7f11af8` + `3531d5c`；M1 `1c9570a` + `6325b7a`
+- **最新 commit**：M3 提交 `5ad3d03`（feat(m3)：Playwright E2E、28 张最终截图、验收脚本六件套、CORS/审计/隐藏菜单/详情名称化/种子文案修复）；M2e `c4668ed` + `088415f`；M2d `f57c831` + `804047a`；M2c `e334734` + `fc97f14`；M2b `fa32065` + `34683e1`；M2a `7f11af8` + `3531d5c`；M1 `1c9570a` + `6325b7a`
 - **远端**：`origin` → `http://192.168.1.100:3300/liyunqing/icp-collab-platform.git`（master 跟踪 origin/master）
 - **M3 验收结论**：通过（详见 `docs/12-M3-验收报告.md`）
   - 证据：`build.ps1` 38s（后端 **170 tests** 0 失败、jar 53.3MB；前端 dist **118 files / 2947.3KB**）；`test-api.ps1` **151.4s**（m2a 87 / m2b 47 / m2d 109 / m2c 70 / m2e 62，全部 0 失败）；`test-e2e.ps1` **23 passed / 1 skipped / 0 failed**（47.2s，0 非预期 console/pageerror）；`screenshots.ps1` 校验 **28 PNG ≥ 25** PASS；`verify.ps1` 全链路 **317.5s PASS**

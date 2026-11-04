@@ -3,6 +3,7 @@ package com.icp.system.controller;
 import com.icp.common.api.ApiResponse;
 import com.icp.common.api.PageResult;
 import com.icp.common.audit.AuditLog;
+import com.icp.report.service.JobExecutionService;
 import com.icp.system.dto.Requests;
 import com.icp.system.entity.SysJob;
 import com.icp.system.service.JobService;
@@ -19,12 +20,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * 定时任务管理。种子权限无 system:job:*，读复用 system:config:list，写复用 system:config:edit；
- * 执行接口本期仅占位（任务描述要求返回 code=0 而非 501）。
+ * 定时任务管理。种子权限沿用 M2a 的 system:job:list / system:job:edit / system:job:run（不新增按钮）；
+ * M2e 起执行接口为真实执行（D40），列表返回进程内 lastRunTime / lastResult。
  */
 @Tag(name = "定时任务")
 @RestController
@@ -32,15 +32,17 @@ import java.util.Map;
 public class JobController {
 
     private final JobService jobService;
+    private final JobExecutionService jobExecutionService;
 
-    public JobController(JobService jobService) {
+    public JobController(JobService jobService, JobExecutionService jobExecutionService) {
         this.jobService = jobService;
+        this.jobExecutionService = jobExecutionService;
     }
 
-    @Operation(summary = "任务分页列表")
+    @Operation(summary = "任务分页列表（含进程内最近执行结果）")
     @GetMapping
     @PreAuthorize("hasAuthority('system:job:list')")
-    public ApiResponse<PageResult<SysJob>> page(
+    public ApiResponse<PageResult<Map<String, Object>>> page(
             @RequestParam(defaultValue = "1") long pageNum,
             @RequestParam(defaultValue = "10") long pageSize,
             @RequestParam(required = false) String keyword,
@@ -58,16 +60,14 @@ public class JobController {
         return ApiResponse.ok();
     }
 
-    @Operation(summary = "执行任务（M2a 占位）")
+    @Operation(summary = "执行任务（真实执行，status=0 时跳过）")
     @PostMapping("/{id}/run")
     @PreAuthorize("hasAuthority('system:job:run')")
     @AuditLog(module = "系统管理", action = "执行任务", businessType = "sys_job")
     public ApiResponse<Map<String, Object>> run(@PathVariable Long id) {
-        SysJob job = jobService.run(id);
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("jobId", job.getId());
-        data.put("jobName", job.getJobName());
-        data.put("note", JobService.NOT_SCHEDULED_NOTE);
-        return ApiResponse.ok(data);
+        SysJob job = jobService.get(id);
+        Map<String, Object> result = jobExecutionService.run(job, true);
+        jobService.recordRun(id, result);
+        return ApiResponse.ok(result);
     }
 }

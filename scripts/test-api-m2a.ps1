@@ -123,7 +123,7 @@ Write-Case 'login: wrong password -> 40101' ($r.status -eq 200 -and $r.code -eq 
 $adminLogin = $logins['admin']
 $adminPerms = @($adminLogin.permissions)
 $adminNodes = Count-MenuNodes $adminLogin.menus
-Write-Case 'menu: admin perms = 86' ($adminPerms.Count -eq 86) ("perms=" + $adminPerms.Count)
+Write-Case 'menu: admin perms = 95' ($adminPerms.Count -eq 95) ("perms=" + $adminPerms.Count)
 Write-Case 'menu: admin tree nodes = 45' ($adminNodes -eq 45) ("nodes=" + $adminNodes)
 $newPerms = @('system:job:list', 'system:job:edit', 'system:job:run', 'system:post:add',
     'system:post:edit', 'system:post:delete', 'system:role:add', 'system:role:edit',
@@ -282,7 +282,7 @@ Write-Case 'crud: delete builtin dict type -> 40001' ($r.code -eq 40001) ("code=
 $r = Invoke-Api -Method Put -Path ('/jobs/1/status') -Token $admin -Body @{ status = 1 }
 Write-Case 'crud: job status update' ($r.code -eq 0) ("code=" + $r.code)
 $r = Invoke-Api -Method Post -Path ('/jobs/1/run') -Token $admin -Body @{}
-Write-Case 'crud: job run placeholder' ($r.code -eq 0 -and $r.data.note) ("note=" + $r.data.note)
+Write-Case 'crud: job run executes' ($r.code -eq 0 -and $null -ne $r.data.executed -and $null -ne $r.data.jobName) ("executed=" + $r.data.executed)
 
 $r = Get-Code '/configs?pageNum=1&pageSize=100' $admin
 $cfg = $null

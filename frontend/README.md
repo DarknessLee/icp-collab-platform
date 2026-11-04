@@ -289,6 +289,39 @@ CSV 导出文件名（UTF-8 BOM 已验证，清单见 `shots\m2b\csv-filenames.t
 - 6 角色菜单/403 矩阵、任务全链（新建→开始→完成/取消、子任务、评论、提醒）、文档上传→发布→权限→下载→归档、借阅申请→审批→通过→下载→归还、公告发布→已读/未读数、消息 SSE 实时 + 批量已读、日程月历/取消。
 - 截图产出到 `shots\m2d\`（final-* 最终版），并回填本 README。
 
+## M2e 报表与预警中心（真实后端验收，2026-11-04）
+
+状态：2026-11-04，M2e 前端工作台改造 + 5 个报表/预警页已按 docs/03 §7/§7.1、docs/01 §2 W01–W10 实现并完成真实后端回归：`m2e-real-pages.mjs` **126/126 PASS**（6 角色页面可见性/菜单/403）、`m2e-real-consistency.mjs` **47/47 PASS**（页面数字与 API 直调逐一对比、trend 边界、缺陷筛选、预警 4 tab/count/空态），两脚本 console/pageerror 均为 0；`npm run build` exit 0，vue-tsc 0 错误，vite 12.75s。
+
+### 页面与能力
+
+| 菜单 | 页面 | 主要能力 |
+| --- | --- | --- |
+| 工作台 | `views/dashboard/index.vue` | 8 指标卡（制度总/有效、风险总/高、覆盖率、缺陷/未关闭、整改率、待办、超期任务、未读消息）+ 快捷入口按权限过滤 + 近 6 月双轴趋势（新增制度/缺陷柱 + 流程均耗时线）+ 骨架/错误重试/刷新；数据来自 `/dashboard/summary`、`/dashboard/trend`，替换原静态演示数据 |
+| 内控概览 | `views/report/overview.vue` | 覆盖率大数字 + dashboard 进度 + 已覆盖/未覆盖；部门/分类覆盖表与分类堆叠柱；部门下拉（需 `system:dept:list`）+ 年度筛选 |
+| 制度与风险 | `views/report/policy.vue` | dim=level/category/dept 切换；风险总数/高/中/低 4 卡；环形图 + 明细（占比 1 位小数） |
+| 缺陷统计 | `views/report/defect.vue` | 严重程度/状态筛选；缺陷总数/整改总数/已通过/完成率卡；严重程度×状态堆叠柱 + 明细；按部门整改率表 + 月度趋势双轴图 |
+| 任务与流程 | `views/report/task.vue` | 任务状态分布 5 卡（总数/待开始/进行中/已完成/逾期，来自 `/reports/tasks`）+ 近 3/6/12 月；6 流程平均/P95 耗时条形图 + 明细；月度完成趋势（均耗时线 + 实例数柱） |
+| 预警中心 | `views/report/alert.vue` | `/alerts/count` 4 类计数卡（任务逾期/制度到期/高风险缺陷/流程超时）；`/alerts` 按 type 分页表、级别标签、剩余/逾期天数；行点击跳转任务/制度/缺陷/流程页 |
+
+### 契约落实要点
+
+- 防御性归一化：`api/report.ts` 对空值/缺字段给 0，`rate` 兼容 0–1 与百分数并 clamp 到 [0,1]，页面统一格式化为 1 位小数或 `%`，空态不出现 `NaN`/负数。
+- 权限不新增串：报表页沿用 `report:icp:view`、`report:risk:view`、`report:rectify:view`、`report:process:view`、`report:alert:view`，工作台沿用 `dashboard:workbench:view`/`dashboard:todo:view`；路由 `meta.permAny` + 守卫跳 403。
+- 无新增依赖：图表复用现有 `utils/echarts.ts` 按需注册封装（Bar/Line/Pie + Grid/Tooltip/Legend）。
+- `/reports/tasks` 已由后端补齐：`views/report/task.vue` 展示任务状态 5 卡；接口不可用时自动隐藏任务卡并保留流程耗时展示，不报错、不估造数据。
+
+### 真实回归与截图
+
+- 脚本（均在真实后端 8080 + dev server 5173 上运行）：
+  - `D:\MyCodes\.smoke-frontend\m2e-real-pages.mjs` → **126/126 PASS**：6 角色重登，工作台 8 卡可见；侧栏「报表中心」与 `report:*` 一致；5 报表页有权限显示标题/表格/无 NaN、无权限跳 `/403`；console/pageerror 0。
+  - `D:\MyCodes\.smoke-frontend\m2e-real-consistency.mjs` → **47/47 PASS**：W01 summary 8 卡逐项相等；W02 覆盖率 100.0%/7 部门/8 分类；W03 dim=level 40/12/18/10、category 8 类、dept 7 类；W04 缺陷 30/整改率 40.0%/筛选 重大+已关闭=4；W05 tasks total/状态计数/逾期与 API 相等、6 流程 p95≥avg；W06 预警 4 卡 5/0/6/0=11、列表 total 一致、制度到期空态、高风险缺陷有数据；trend months=1/12 边界；rate 1 位小数；console/pageerror 0。
+  - `D:\MyCodes\.smoke-frontend\m2e-real-shots.mjs`：staff01 直访 `/report/alert` → `/403`、预警 4 tab 与空态截图。
+- 6 角色权限快照（真实后端）：admin 95（report 6）、icpadmin 137（6）、auditor 62（6）、exec 60（6）、dept01 104（6）、staff01 51（0，仅 dashboard 两项）；staff01 报表菜单不显示、5 个 `/report/*` 全部 403。
+- 关键数字（干净种子基线，admin 直调 API 与页面逐项相等）：制度 40/有效 30、风险 40/高 12、覆盖率 100.0%（40/40）、缺陷 30/未关闭 20、整改 25/已通过 10/40.0%、任务 total 80（0:8 / 1:12 / 2:60 / 3:0，逾期 5）、预警 5/0/6/0=11。
+- 截图：`D:\MyCodes\.smoke-frontend\shots\m2e\` 共 43 张 `real-*.png`（干净基线 2026-11-04 10:10–10:14）：`real-dashboard-{6 角色}.png`、`real-{overview,policy,defect,task,alert}-{5 角色}.png`、`real-consistency-*.png`、`real-alert-tab-{task-overdue,policy-expiring,defect-high-risk,process-overdue}.png`、`real-403-staff.png`、`real-empty-alert.png`，以及 mock 阶段 `m2e-*.png`。
+- 构建：`npm run build` exit 0，vue-tsc 0 错误，vite 12.75s（element-plus 840.00kB / echarts 535.87kB / bpmn 140.08kB / vendor 354.24kB）。
+
 ## M1 范围与未联调项
 
 - 已完成：登录页（真实后端联调通过）、主框架（侧栏/面包屑/用户下拉/多标签页/移动端抽屉）、登录守卫、按菜单动态注册占位路由、直接输入模块地址时补注册路由（避免刷新 404）、`v-perm` 按钮权限、工作台统计卡片与 2 张 ECharts 图、403/404。

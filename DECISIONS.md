@@ -1,4 +1,4 @@
-﻿# 决策记录
+# 决策记录
 
 > 一行一条；影响架构/验收的必须写；后续不重复讨论；与 docs/00 同步。
 > 待用户确认的决策标注「待确认」，确认后改为「用户确认」。
@@ -43,7 +43,8 @@
 
 | D36 | 2026-11-03 | 站内信实时推送采用 SSE（`GET /messages/stream?access_token=<JWT>`，EventSource 无法带自定义 header；心跳 30s，每用户最多 3 连接，前端指数退避重连） | 不引入 WebSocket 服务与额外依赖；token 走 query 需在日志与审计中脱敏；M2d 内网/单机足够 | M2d 设计（Lead） |
 | D37 | 2026-11-03 | 文档访问控制用 `coll_doc_perm`（全员/部门/角色/用户四类，含 can_view/can_download），下载校验顺序：已发布 → 权限命中 → 已通过借阅单兜底 → 40300；权限全量覆盖写入 | 满足方案「文档中心权限」与流程借阅联动；暂不实现历史版本文件与在线预览（二期） | M2d 设计（Lead） |
-| D38 | 2026-11-03 | M2d 数据权限映射：任务按 assignee/creator/dept，文档按 dept/owner+perm 表，公告按 dept/role_code，日程按 owner/dept，消息按 user_id；统一复用 `@DataScope` 与本人维度 | 与 M2a/M2b 一致，避免各模块自造过滤；越权详情统一 40300 | M2d 设计（Lead） |
+| D42 | 2026-11-04 | M2e 报表口径以实际字典为准：风险等级 1=高/2=中/3=低（「高风险」=risk_level=1），缺陷严重度 1=重大/2=一般/3=轻微（「高风险缺陷」=severity=1 且未关闭）；覆盖率 covered=存在 status=1 生效矩阵的风险 | 方案 §7.1 原写 level=3/severity=3 与种子字典相反；不改字典与种子，按 R01 期望「高 12」落地；文档同步修 docs/03 §7.1 第 3 条与 docs/01 R05/R11 | M2e 开工自检（backend-eng 报、Lead 裁决） |
+| D43 | 2026-11-04 | 工作台 `GET /dashboard/summary` 与 `/dashboard/trend` 权限放开为「`report:dashboard:view` 或 `dashboard:workbench:view` 或 `dashboard:todo:view`」；报表与预警仍严格 `report:*`；`report:dashboard:view` 不新增种子 | EMPLOYEE 仅有工作台菜单（61/62）与 `dashboard:*` 按钮权限，无 `report:*`；不新增权限串以保持种子 540 不变 | M2e 设计（Lead） || D38 | 2026-11-03 | M2d 数据权限映射：任务按 assignee/creator/dept，文档按 dept/owner+perm 表，公告按 dept/role_code，日程按 owner/dept，消息按 user_id；统一复用 `@DataScope` 与本人维度 | 与 M2a/M2b 一致，避免各模块自造过滤；越权详情统一 40300 | M2d 设计（Lead） |
 
 ## 备注
 

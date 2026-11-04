@@ -202,6 +202,36 @@ const staticPageRoutes: RouteRecordRaw[] = [
     name: 'CollabMessage',
     component: () => import('@/views/collab/message/index.vue'),
     meta: { title: '消息中心', permAny: ['collab:message:list', 'collab:message:get'] }
+  },
+  {
+    path: 'report/overview',
+    name: 'ReportOverview',
+    component: () => import('@/views/report/overview.vue'),
+    meta: { title: '内控概览', permAny: ['report:icp:view', 'report:dashboard:view'] }
+  },
+  {
+    path: 'report/policy',
+    name: 'ReportPolicy',
+    component: () => import('@/views/report/policy.vue'),
+    meta: { title: '制度与风险统计', permAny: ['report:risk:view'] }
+  },
+  {
+    path: 'report/defect',
+    name: 'ReportDefect',
+    component: () => import('@/views/report/defect.vue'),
+    meta: { title: '缺陷统计', permAny: ['report:rectify:view'] }
+  },
+  {
+    path: 'report/task',
+    name: 'ReportTask',
+    component: () => import('@/views/report/task.vue'),
+    meta: { title: '任务与流程统计', permAny: ['report:process:view'] }
+  },
+  {
+    path: 'report/alert',
+    name: 'ReportAlert',
+    component: () => import('@/views/report/alert.vue'),
+    meta: { title: '预警中心', permAny: ['report:alert:view'] }
   }
 ]
 

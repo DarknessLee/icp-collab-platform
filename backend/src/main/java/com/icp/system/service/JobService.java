@@ -10,21 +10,28 @@ import com.icp.system.mapper.SysJobMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
- * 定时任务 M2a 仅提供管理与接口占位：不接入调度器（M2 后续阶段接入）。
+ * 定时任务管理（M2e 起升级为真实执行：{@link JobScheduler} 每 10 分钟扫描 status=1 的任务，
+ * 手动触发走 {@code POST /jobs/{id}/run}，两者共用 {@code JobExecutionService} 的 handler）。
+ * 最近执行结果保存在进程内（D40/M2e，不落新增表）。
  */
 @Service
 public class JobService {
 
-    public static final String NOT_SCHEDULED_NOTE = "M2a 仅接口未接入调度";
-
     private final SysJobMapper jobMapper;
+    private final Map<Long, Map<String, Object>> lastRuns = new ConcurrentHashMap<>();
 
     public JobService(SysJobMapper jobMapper) {
         this.jobMapper = jobMapper;
     }
 
-    public PageResult<SysJob> page(long pageNum, long pageSize, String keyword, Integer status) {
+    public PageResult<Map<String, Object>> page(long pageNum, long pageSize, String keyword, Integer status) {
         LambdaQueryWrapper<SysJob> wrapper = new LambdaQueryWrapper<SysJob>().orderByAsc(SysJob::getId);
         if (StringUtils.hasText(keyword)) {
             wrapper.and(query -> query.like(SysJob::getJobName, keyword.trim())
@@ -35,7 +42,22 @@ public class JobService {
             wrapper.eq(SysJob::getStatus, status);
         }
         Page<SysJob> page = jobMapper.selectPage(new Page<>(pageNum, pageSize), wrapper);
-        return new PageResult<>(page.getRecords(), page.getTotal(), pageNum, pageSize);
+        List<Map<String, Object>> records = new ArrayList<>();
+        for (SysJob job : page.getRecords()) {
+            Map<String, Object> view = new LinkedHashMap<>();
+            view.put("id", job.getId());
+            view.put("jobName", job.getJobName());
+            view.put("jobGroup", job.getJobGroup());
+            view.put("cronExpression", job.getCronExpression());
+            view.put("invokeTarget", job.getInvokeTarget());
+            view.put("status", job.getStatus());
+            view.put("remark", job.getRemark());
+            Map<String, Object> last = lastRuns.get(job.getId());
+            view.put("lastRunTime", last == null ? null : last.get("lastRunTime"));
+            view.put("lastResult", last == null ? null : last.get("message"));
+            records.add(view);
+        }
+        return new PageResult<>(records, page.getTotal(), pageNum, pageSize);
     }
 
     public SysJob get(Long id) {
@@ -55,8 +77,18 @@ public class JobService {
         jobMapper.updateById(job);
     }
 
-    public SysJob run(Long id) {
-        SysJob job = get(id);
-        return job;
+    /** 调度扫描用：仅执行启用中的任务。 */
+    public List<SysJob> listEnabled() {
+        return jobMapper.selectList(new LambdaQueryWrapper<SysJob>()
+                .eq(SysJob::getStatus, 1)
+                .orderByAsc(SysJob::getId));
+    }
+
+    public void recordRun(Long jobId, Map<String, Object> result) {
+        lastRuns.put(jobId, new LinkedHashMap<>(result));
+    }
+
+    public Map<String, Object> lastRun(Long jobId) {
+        return lastRuns.get(jobId);
     }
 }

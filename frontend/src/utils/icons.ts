@@ -44,7 +44,6 @@ import {
   Reading,
   Refresh,
   Search,
-  Setting,
   Share,
   Stamp,
   SwitchButton,
@@ -105,7 +104,6 @@ const ICON_MAP: Record<string, Component> = {
   Reading,
   Refresh,
   Search,
-  Setting,
   Share,
   Stamp,
   SwitchButton,
@@ -117,7 +115,10 @@ const ICON_MAP: Record<string, Component> = {
   User,
   UserFilled,
   Warning,
-  WarningFilled
+  WarningFilled,
+  // Element Plus 的 Setting 路径在 Chromium/Edge 的 GPU 光栅化下会整块不绘制（实测元素存在但无像素），
+  // 这里用同为齿轮造型的 Tools 兜底，保证「系统管理」图标稳定可见
+  Setting: Tools
 }
 
 const FALLBACK_ICON: Component = Menu

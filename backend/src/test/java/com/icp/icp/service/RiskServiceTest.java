@@ -4,7 +4,6 @@ import com.icp.common.api.ErrorCode;
 import com.icp.common.datascope.DataScopeInfo;
 import com.icp.common.exception.BusinessException;
 import com.icp.icp.entity.IcpRisk;
-import com.icp.icp.entity.IcpRiskCategory;
 import com.icp.icp.mapper.IcpRiskCategoryMapper;
 import com.icp.icp.mapper.IcpRiskMapper;
 import com.icp.icp.support.IcpLookupService;

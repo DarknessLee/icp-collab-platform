@@ -86,16 +86,16 @@ public class AlertService {
         DataScopeInfo info = scope.current();
         List<Map<String, Object>> items = new ArrayList<>();
         if (type == null || type.isBlank() || TYPE_TASK_OVERDUE.equals(type)) {
-            items.addAll(taskAlerts(info, type == null || type.isBlank()));
+            items.addAll(taskAlerts(info));
         }
         if (type == null || type.isBlank() || TYPE_POLICY_EXPIRING.equals(type)) {
-            items.addAll(policyAlerts(info, type == null || type.isBlank()));
+            items.addAll(policyAlerts(info));
         }
         if (type == null || type.isBlank() || TYPE_DEFECT_HIGH_RISK.equals(type)) {
-            items.addAll(defectAlerts(info, type == null || type.isBlank()));
+            items.addAll(defectAlerts(info));
         }
         if (type == null || type.isBlank() || TYPE_PROCESS_OVERDUE.equals(type)) {
-            items.addAll(processAlerts(info, type == null || type.isBlank()));
+            items.addAll(processAlerts(info));
         }
         items.sort(Comparator
                 .comparingInt((Map<String, Object> row) -> "high".equals(row.get("level")) ? 0 : 1)
@@ -118,14 +118,14 @@ public class AlertService {
 
     private Map<String, Long> collectCounts(DataScopeInfo info) {
         Map<String, Long> counts = new LinkedHashMap<>();
-        counts.put(TYPE_TASK_OVERDUE, (long) taskAlerts(info, true).size());
-        counts.put(TYPE_POLICY_EXPIRING, (long) policyAlerts(info, true).size());
-        counts.put(TYPE_DEFECT_HIGH_RISK, (long) defectAlerts(info, true).size());
-        counts.put(TYPE_PROCESS_OVERDUE, (long) processAlerts(info, true).size());
+        counts.put(TYPE_TASK_OVERDUE, (long) taskAlerts(info).size());
+        counts.put(TYPE_POLICY_EXPIRING, (long) policyAlerts(info).size());
+        counts.put(TYPE_DEFECT_HIGH_RISK, (long) defectAlerts(info).size());
+        counts.put(TYPE_PROCESS_OVERDUE, (long) processAlerts(info).size());
         return counts;
     }
 
-    private List<Map<String, Object>> taskAlerts(DataScopeInfo info, boolean all) {
+    private List<Map<String, Object>> taskAlerts(DataScopeInfo info) {
         LocalDate today = LocalDate.now();
         List<CollTask> tasks = taskMapper.selectList(new LambdaQueryWrapper<CollTask>()
                         .in(CollTask::getStatus, 0, 1)
@@ -151,7 +151,7 @@ public class AlertService {
         return result;
     }
 
-    private List<Map<String, Object>> policyAlerts(DataScopeInfo info, boolean all) {
+    private List<Map<String, Object>> policyAlerts(DataScopeInfo info) {
         LocalDate today = LocalDate.now();
         LocalDate deadline = today.plusDays(POLICY_EXPIRE_DAYS);
         List<IcpPolicy> policies = policyMapper.selectList(new LambdaQueryWrapper<IcpPolicy>()
@@ -179,7 +179,7 @@ public class AlertService {
         return result;
     }
 
-    private List<Map<String, Object>> defectAlerts(DataScopeInfo info, boolean all) {
+    private List<Map<String, Object>> defectAlerts(DataScopeInfo info) {
         List<IcpDefect> defects = defectMapper.selectList(new LambdaQueryWrapper<IcpDefect>()
                         .eq(IcpDefect::getSeverity, 1)
                         .ne(IcpDefect::getStatus, 3)).stream()
@@ -205,7 +205,7 @@ public class AlertService {
         return result;
     }
 
-    private List<Map<String, Object>> processAlerts(DataScopeInfo info, boolean all) {
+    private List<Map<String, Object>> processAlerts(DataScopeInfo info) {
         LocalDateTime now = LocalDateTime.now();
         int timeoutHours = configService.getInt(CONFIG_TIMEOUT_HOURS, DEFAULT_TIMEOUT_HOURS);
         List<WfBusinessLink> links = linkMapper.selectList(new LambdaQueryWrapper<WfBusinessLink>()

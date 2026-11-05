@@ -48,7 +48,6 @@ import org.flowable.engine.TaskService;
 import org.flowable.engine.history.HistoricActivityInstance;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.task.api.Task;
-import org.flowable.task.api.history.HistoricTaskInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -101,7 +100,6 @@ public class WorkflowInstanceService {
     private final IcpLookupService icpLookupService;
     private final CollDocMapper collDocMapper;
     private final WorkflowUserResolver userResolver;
-    private final WorkflowDefinitionService definitionService;
     private final DataScopeService dataScopeService;
     private final ConfigService configService;
     private final CacheService cacheService;
@@ -126,7 +124,6 @@ public class WorkflowInstanceService {
                                    IcpLookupService icpLookupService,
                                    CollDocMapper collDocMapper,
                                    WorkflowUserResolver userResolver,
-                                   WorkflowDefinitionService definitionService,
                                    DataScopeService dataScopeService,
                                    ConfigService configService,
                                    CacheService cacheService) {
@@ -150,7 +147,6 @@ public class WorkflowInstanceService {
         this.icpLookupService = icpLookupService;
         this.collDocMapper = collDocMapper;
         this.userResolver = userResolver;
-        this.definitionService = definitionService;
         this.dataScopeService = dataScopeService;
         this.configService = configService;
         this.cacheService = cacheService;
@@ -186,7 +182,7 @@ public class WorkflowInstanceService {
                 ? WorkflowConstants.BUSINESS_TYPES.get(processKey) : request.businessType();
         Map<String, Object> formData = request.formData() == null ? new LinkedHashMap<>() : new LinkedHashMap<>(request.formData());
 
-        BusinessRef ref = resolveBusiness(processKey, businessType, request, formData, userId);
+        BusinessRef ref = resolveBusiness(processKey, request, formData, userId);
 
         Map<String, Object> variables = new LinkedHashMap<>();
         variables.put(WorkflowConstants.VAR_INITIATOR, String.valueOf(userId));
@@ -233,7 +229,7 @@ public class WorkflowInstanceService {
         return result;
     }
 
-    private BusinessRef resolveBusiness(String processKey, String businessType,
+    private BusinessRef resolveBusiness(String processKey,
                                         WorkflowRequests.StartRequest request,
                                         Map<String, Object> formData, Long userId) {
         Long businessId = request.businessId();
@@ -285,7 +281,7 @@ public class WorkflowInstanceService {
                     return new BusinessRef(purchase.getId(), purchase.getApplyNo(),
                             title != null ? title : prefix + "-" + purchase.getTitle(), purchase.getDeptId());
                 }
-                WfPurchase purchase = createPurchase(formData, userId, prefix, title);
+                WfPurchase purchase = createPurchase(formData, userId, title);
                 return new BusinessRef(purchase.getId(), purchase.getApplyNo(), prefix + "-" + purchase.getTitle(), purchase.getDeptId());
             }
             case WorkflowConstants.SEAL_APPLY -> {
@@ -298,7 +294,7 @@ public class WorkflowInstanceService {
                     return new BusinessRef(seal.getId(), seal.getApplyNo(),
                             title != null ? title : prefix + "-" + seal.getReason(), seal.getDeptId());
                 }
-                WfSeal seal = createSeal(formData, userId, prefix, title);
+                WfSeal seal = createSeal(formData, userId, title);
                 return new BusinessRef(seal.getId(), seal.getApplyNo(), prefix + "-" + seal.getReason(), seal.getDeptId());
             }
             case WorkflowConstants.DOC_BORROW -> {
@@ -319,7 +315,7 @@ public class WorkflowInstanceService {
         }
     }
 
-    private WfPurchase createPurchase(Map<String, Object> formData, Long userId, String prefix, String title) {
+    private WfPurchase createPurchase(Map<String, Object> formData, Long userId, String title) {
         String purchaseTitle = title != null ? title : str(formData.get("title"));
         if (purchaseTitle == null || purchaseTitle.isBlank()) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "采购标题不能为空");
@@ -350,7 +346,7 @@ public class WorkflowInstanceService {
         return purchase;
     }
 
-    private WfSeal createSeal(Map<String, Object> formData, Long userId, String prefix, String title) {
+    private WfSeal createSeal(Map<String, Object> formData, Long userId, String title) {
         String reason = title != null ? title : str(formData.get("reason"));
         if (reason == null || reason.isBlank()) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "用印事由不能为空");
@@ -1313,10 +1309,6 @@ public class WorkflowInstanceService {
     private Long currentDeptId(Long userId) {
         SysUser user = sysUserMapper.selectById(userId);
         return user == null ? null : user.getDeptId();
-    }
-
-    private IcpPolicy requirePolicy(Long id) {
-        return policyMapper.selectById(id);
     }
 
     private <T> T requireBusiness(Long id, T value, String label) {

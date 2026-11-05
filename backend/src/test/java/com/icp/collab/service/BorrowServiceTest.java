@@ -19,7 +19,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -64,7 +63,7 @@ class BorrowServiceTest {
                 .thenReturn(new DataScopeInfo(11L, 2L, DataScopeInfo.SELF, List.of()));
     }
 
-    private CollDocBorrow borrow(int status, Long borrowerId, Long deptId) {
+    private CollDocBorrow borrow(int status, Long borrowerId) {
         CollDocBorrow borrow = new CollDocBorrow();
         borrow.setId(8001L);
         borrow.setDocId(3341L);
@@ -78,7 +77,7 @@ class BorrowServiceTest {
 
     @Test
     void returnBookMovesApprovedToReturned() {
-        when(borrowMapper.selectById(8001L)).thenReturn(borrow(1, 11L, 2L));
+        when(borrowMapper.selectById(8001L)).thenReturn(borrow(1, 11L));
 
         CollDocBorrow returned = service.returnBook(8001L);
 
@@ -88,7 +87,7 @@ class BorrowServiceTest {
 
     @Test
     void returnBookRejectsPendingBorrow() {
-        when(borrowMapper.selectById(8001L)).thenReturn(borrow(0, 11L, 2L));
+        when(borrowMapper.selectById(8001L)).thenReturn(borrow(0, 11L));
 
         assertThatThrownBy(() -> service.returnBook(8001L))
                 .isInstanceOf(BusinessException.class)
@@ -98,7 +97,7 @@ class BorrowServiceTest {
 
     @Test
     void returnBookRejectsOtherBorrower() {
-        when(borrowMapper.selectById(8001L)).thenReturn(borrow(1, 3L, 2L));
+        when(borrowMapper.selectById(8001L)).thenReturn(borrow(1, 3L));
 
         assertThatThrownBy(() -> service.returnBook(8001L))
                 .isInstanceOf(BusinessException.class)
@@ -108,7 +107,7 @@ class BorrowServiceTest {
 
     @Test
     void returnBookRejectsOutOfScopeBorrow() {
-        when(borrowMapper.selectById(8001L)).thenReturn(borrow(1, 3L, 5L));
+        when(borrowMapper.selectById(8001L)).thenReturn(borrow(1, 3L));
 
         assertThatThrownBy(() -> service.returnBook(8001L))
                 .isInstanceOf(BusinessException.class)

@@ -4,7 +4,6 @@ import com.icp.workflow.entity.WfProcessMeta;
 import com.icp.workflow.mapper.WfProcessMetaMapper;
 import com.icp.workflow.support.WorkflowConstants;
 import jakarta.annotation.PostConstruct;
-import org.flowable.engine.ProcessEngine;
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.repository.ProcessDefinition;
@@ -31,14 +30,11 @@ public class WorkflowDefinitionService {
 
     private static final Logger log = LoggerFactory.getLogger(WorkflowDefinitionService.class);
 
-    private final ProcessEngine processEngine;
     private final RepositoryService repositoryService;
     private final WfProcessMetaMapper processMetaMapper;
 
-    public WorkflowDefinitionService(ProcessEngine processEngine,
-                                     RepositoryService repositoryService,
+    public WorkflowDefinitionService(RepositoryService repositoryService,
                                      WfProcessMetaMapper processMetaMapper) {
-        this.processEngine = processEngine;
         this.repositoryService = repositoryService;
         this.processMetaMapper = processMetaMapper;
     }

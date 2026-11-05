@@ -12,7 +12,6 @@ import com.icp.system.mapper.SysDeptMapper;
 import com.icp.system.mapper.SysRoleMapper;
 import com.icp.system.mapper.SysUserMapper;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;

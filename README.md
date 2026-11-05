@@ -2,7 +2,7 @@
 
 > 覆盖「制度 → 风险 → 控制矩阵 → 内控评价 → 缺陷整改」闭环，融合审批流、协同任务、文档与运营看板的企业内控一体化平台。
 
-- **当前阶段**：**M6 演示增强（进行中）**；一期 M0–M4 已闭环，W1/W2 已推送（文档预览/报表下钻/脱敏/抄送/采购金额分级，见 [STATUS.md](STATUS.md)）
+- **当前阶段**：**M6 演示增强已完成并推送**；M0–M4 交付闭环，M6 三轮增强（W1 文档预览/报表下钻/脱敏/抄送、W2 采购金额分级、W3 会议纪要/数据大屏）均已验收，当前为可交付演示版本（详见 [STATUS.md](STATUS.md)）
 - **版本**：V1.0（未发表）
 - **产品形态**：B/S Web，前后端分离，浏览器访问（PC 优先，响应式兼容移动浏览器）
 - **远端仓库**：`http://192.168.1.100:3300/liyunqing/icp-collab-platform.git`（Gitea 私有，master）
@@ -13,9 +13,9 @@
   ---   ---  
   前端   Vue 3.5.44 + TypeScript 5.7 + Vite 6.4.5 + Element Plus 2.14.7 + Pinia 2.3 + Vue Router 4.6 + axios 1.21 + ECharts 5.6；bpmn-js 17.11.1 只读流程图  
   后端   Java 21 LTS（Corretto 21.0.13）+ Spring Boot 3.3.4 + Spring Security + JWT（jjwt）+ MyBatis-Plus + Flyway；Flowable 7.1.0（6 条内置 BPMN）  
-  数据库   MySQL 8.0.46（项目内独立实例 `127.0.0.1:3307`，库 `icp_platform`）+ Flyway V1/V2/V3（42 张业务表 + ACT_* 39 张）  
+  数据库   MySQL 8.0.46（项目内独立实例 `127.0.0.1:3307`，库 `icp_platform`）+ Flyway V1–V4（43 张业务表 + ACT_* 39 张）  
   存储/缓存   本地磁盘附件（`FileStorage` 接口，预留 S3/MinIO）／进程内 Caffeine（`CacheService` 接口，预留 Redis）  
-  测试   JUnit 5 + Spring Boot Test（170 tests）；Playwright E2E（`e2e/`，E01–E14 + 截图 spec）；API 验收脚本 5 套（375 例）  
+  测试   JUnit 5 + Spring Boot Test（177 tests）；Playwright E2E（`e2e/`，E01–E19 + 截图 spec，31 项）；API 验收脚本 5 套（375 例）  
   部署   Docker Compose 文件（M4 交付，本机无 Docker 不实测）+ 本地 PowerShell 脚本（一键启动/重置/备份）  
 
 ## 功能一览（全部已实现并验收）
@@ -25,7 +25,7 @@
 - **流程中心**：Flowable 7 内嵌 + 6 条流程（制度发布、缺陷整改、评价计划、文档借阅、采购申请、用印申请）；待办/已办/我发起、同意/驳回/重提/催办、流程监控与超时、只读 BPMN 高亮、审批历史留痕。
 - **协同运营**：任务中心（子任务/评论/提醒）、文档中心（目录/权限/版本/下载/在线预览）、文档借阅、公告（范围/已读）、站内信（SSE 实时）、日程月历、会议纪要（20 条种子，待召开/已召开/已取消）。
 - **报表与预警**：工作台 8 卡 + 趋势、内控概览/制度/缺陷/任务/预警 5 个报表页、4 类预警与 5 个定时扫描任务、图表点击下钻列表、数据大屏（`/screen` 全屏驾驶舱，60s 刷新）。
-- **演示态**：60 个流程实例（40 待办 / 20 已完成 / 20 催办）、52 条制度、40 条风险、30 条缺陷、80 条协同任务；截图见 [`docs/screenshots/`](docs/screenshots/)。
+- **演示态**：60 个流程实例（40 待办 / 20 已完成 / 20 催办）、52 条制度、40 条风险、30 条缺陷、80 条协同任务、20 条会议纪要；截图见 [`docs/screenshots/`](docs/screenshots/)。
 
 ## 界面预览
 
@@ -153,13 +153,13 @@ powershell -ExecutionPolicy Bypass -File scripts\verify.ps1       # 一键全链
 ```text
 icp-collab-platform/
 ├─ backend/                 # Spring Boot 3.3.4 单模块 com.icp：common / system / icp / workflow / collab / report
-│  └─ src/main/resources/   # db/migration（V1 schema 42 表 / V2 seed_base / V3 seed_business）+ processes/（6 条 BPMN）
+│  └─ src/main/resources/   # db/migration（V1 schema / V2 seed_base / V3 seed_business / V4 coll_meeting，43 张业务表）+ processes/（6 条 BPMN）
 ├─ frontend/                # Vue3 + Vite：登录、主框架、工作台、系统管理 9 页、内控 7 页、流程中心 9 页、协同 6 页、报表 5 页
 ├─ e2e/                     # Playwright：E01–E19 用例 + 31 项 + screenshots.spec.ts（S01–S30）+ fixtures
 ├─ scripts/                 # start-local/stop-local、backup/restore、demo-reset、build、test-api(-m2a…m2e)、test-e2e、
 │                           # screenshots、seed-flow、check-docs、verify
 ├─ docs/                    # 00 画像、01 阶段计划、02 差距风险、03 契约、04 数据模型与种子、05 权限矩阵、06–14 验收报告、
-│                           # 13 部署运维、14 用户手册、16 交付验收、17 演示增强、screenshots/
+│                           # 13 部署运维、14 用户手册、16 交付验收、17 演示增强、18 使用说明（docx）、screenshots/
 ├─ .runtime/                # 本地 MySQL 数据、附件、日志（gitignore）
 ├─ deploy/                  # Docker Compose、Nginx、初始化与备份脚本（M4 交付）
 ├─ STATUS.md / DECISIONS.md / PLAN-MATRIX.md
@@ -183,7 +183,7 @@ icp-collab-platform/
 ## 交付边界（一期）
 
 - **做**：组织权限、登录与审计、制度/风险/控制矩阵、内控评价、缺陷整改闭环、6 条内置审批流（采购按金额两级审批）、任务/文档/公告/消息/日程/会议纪要、看板与预警、图表下钻、数据大屏、部署文件与文档、Playwright E2E 与 30 张截图
-- **不做（二期）**：多租户实装、真实 Redis/MinIO/ES、OAuth2/LDAP、电子签名、K8s/Helm 实机、监控栈、独立移动端、低代码表单、在线流程设计器、在线文档预览、合同/采购/费用插件
+- **不做（二期）**：多租户实装、真实 Redis/MinIO/ES、OAuth2/LDAP、电子签名、K8s/Helm 实机、监控栈、独立移动端、低代码表单、在线流程设计器、合同/采购/费用插件
 - 交付范围：本项目只交付可运行 Demo + 项目文档，不含登记/备案类材料（2026-11-05 范围确认，见 `DECISIONS.md` D11）
 
 ## 约定

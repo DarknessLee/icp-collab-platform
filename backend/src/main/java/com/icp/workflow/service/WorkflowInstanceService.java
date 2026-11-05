@@ -194,6 +194,9 @@ public class WorkflowInstanceService {
         variables.put(WorkflowConstants.VAR_PROCESS_KEY, processKey);
         variables.put("businessId", ref.businessId());
         variables.put("businessType", businessType);
+        if (WorkflowConstants.PURCHASE_APPLY.equals(processKey)) {
+            variables.put(WorkflowConstants.VAR_PURCHASE_AMOUNT, purchaseAmount(formData));
+        }
 
         ProcessInstance instance = runtimeService.startProcessInstanceByKey(processKey, ref.businessNo(), variables);
         String processInstanceId = instance.getProcessInstanceId();
@@ -1202,8 +1205,29 @@ public class WorkflowInstanceService {
         return dept == null ? null : dept.getDeptName();
     }
 
-    private Long longValue(Object value) {
-        if (value == null) {
+    /**
+     * 采购金额流程变量：用于 purchase_apply 金额分级审批（≤5000 部门审批，>5000 追加管理层）。
+     */
+    private java.math.BigDecimal purchaseAmount(Map<String, Object> formData) {
+        Object raw = formData == null ? null : formData.get("amount");
+        if (raw == null) {
+            return java.math.BigDecimal.ZERO;
+        }
+        if (raw instanceof java.math.BigDecimal decimal) {
+            return decimal;
+        }
+        String text = String.valueOf(raw).trim();
+        if (text.isEmpty()) {
+            return java.math.BigDecimal.ZERO;
+        }
+        try {
+            return new java.math.BigDecimal(text);
+        } catch (NumberFormatException e) {
+            return java.math.BigDecimal.ZERO;
+        }
+    }
+
+    private Long longValue(Object value) {        if (value == null) {
             return null;
         }
         if (value instanceof Number number) {

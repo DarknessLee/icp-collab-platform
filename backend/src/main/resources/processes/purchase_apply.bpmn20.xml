@@ -5,13 +5,23 @@
              targetNamespace="http://www.icp-platform.com/workflow">
 
     <process id="purchase_apply" name="采购申请审批" isExecutable="true">
+        <documentation>部门负责人审批；采购金额 &gt; 5000 元时追加管理层审批，≤ 5000 元部门审批后结束。</documentation>
         <startEvent id="start" name="开始"/>
         <userTask id="submit" name="发起申请" flowable:assignee="${initiator}"/>
-        <userTask id="approve" name="采购审批" flowable:candidateGroups="${approverGroups}"/>
+        <userTask id="approve" name="部门审批" flowable:candidateGroups="${approverGroups}"/>
+        <exclusiveGateway id="amountGateway" name="金额判定"/>
+        <userTask id="approve2" name="管理层审批" flowable:candidateGroups="ROLE_MANAGEMENT"/>
         <endEvent id="end" name="结束"/>
 
         <sequenceFlow id="flow1" sourceRef="start" targetRef="submit"/>
         <sequenceFlow id="flow2" sourceRef="submit" targetRef="approve"/>
-        <sequenceFlow id="flow3" sourceRef="approve" targetRef="end"/>
+        <sequenceFlow id="flow3" sourceRef="approve" targetRef="amountGateway"/>
+        <sequenceFlow id="flow4" sourceRef="amountGateway" targetRef="end">
+            <conditionExpression xsi:type="tFormalExpression"><![CDATA[${purchaseAmount <= 5000}]]></conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow id="flow5" sourceRef="amountGateway" targetRef="approve2">
+            <conditionExpression xsi:type="tFormalExpression"><![CDATA[${purchaseAmount > 5000}]]></conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow id="flow6" sourceRef="approve2" targetRef="end"/>
     </process>
 </definitions>

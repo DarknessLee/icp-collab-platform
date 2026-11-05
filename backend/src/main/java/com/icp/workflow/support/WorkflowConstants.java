@@ -87,6 +87,10 @@ public final class WorkflowConstants {
     public static final String VAR_BUSINESS_NO = "businessNo";
     public static final String VAR_PROCESS_KEY = "processKey";
     public static final String VAR_TITLE = "title";
+    /** 采购金额（purchase_apply 金额分级审批用，超 5000 元追加管理层审批）。 */
+    public static final String VAR_PURCHASE_AMOUNT = "purchaseAmount";
+    /** 采购金额分级阈值（元）。 */
+    public static final java.math.BigDecimal PURCHASE_AMOUNT_THRESHOLD = new java.math.BigDecimal("5000");
 
     /** 流程超时配置 key（sys_config），默认 48 小时。 */
     public static final String CONFIG_TIMEOUT_HOURS = "workflow.timeout.hours";

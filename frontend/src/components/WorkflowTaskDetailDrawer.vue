@@ -72,6 +72,20 @@
           </div>
         </div>
       </el-form-item>
+      <el-form-item label="抄送人">
+        <el-select
+          v-model="approveForm.ccUserIds"
+          multiple
+          filterable
+          clearable
+          collapse-tags
+          collapse-tags-tooltip
+          placeholder="可选，审批完成后抄送通知"
+          class="wf-cc-select"
+        >
+          <el-option v-for="item in userOptions" :key="item.id" :label="item.label" :value="item.id" />
+        </el-select>
+      </el-form-item>
     </el-form>
     <template #footer>
       <el-button @click="approveVisible = false">取消</el-button>
@@ -85,6 +99,20 @@
     <el-form ref="rejectFormRef" :model="rejectForm" :rules="rejectRules" label-width="80px">
       <el-form-item label="驳回意见" prop="comment">
         <el-input v-model="rejectForm.comment" type="textarea" :rows="4" placeholder="请填写驳回原因（必填）" maxlength="500" show-word-limit />
+      </el-form-item>
+      <el-form-item label="抄送人">
+        <el-select
+          v-model="rejectForm.ccUserIds"
+          multiple
+          filterable
+          clearable
+          collapse-tags
+          collapse-tags-tooltip
+          placeholder="可选，驳回后抄送通知"
+          class="wf-cc-select"
+        >
+          <el-option v-for="item in userOptions" :key="item.id" :label="item.label" :value="item.id" />
+        </el-select>
       </el-form-item>
     </el-form>
     <template #footer>
@@ -112,6 +140,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { taskApi, workflowTypeName } from '@/api/workflow'
+import { userApi } from '@/api/system'
 import FileUpload from '@/components/FileUpload.vue'
 import WorkflowDiagram from '@/components/WorkflowDiagram.vue'
 import WorkflowFormView from '@/components/WorkflowFormView.vue'
@@ -149,13 +178,14 @@ const activeTab = ref('form')
 const submitting = ref(false)
 
 const approveVisible = ref(false)
-const approveForm = reactive<{ comment: string; attachments: { id: string | number; name: string }[] }>({
+const approveForm = reactive<{ comment: string; attachments: { id: string | number; name: string }[]; ccUserIds: (string | number)[] }>({
   comment: '',
-  attachments: []
+  attachments: [],
+  ccUserIds: []
 })
 const rejectVisible = ref(false)
 const rejectFormRef = ref<FormInstance>()
-const rejectForm = reactive({ comment: '' })
+const rejectForm = reactive<{ comment: string; ccUserIds: (string | number)[] }>({ comment: '', ccUserIds: [] })
 const rejectRules: FormRules = {
   comment: [{ required: true, message: '驳回意见不能为空', trigger: 'blur' }]
 }
@@ -164,6 +194,25 @@ const urgeFormRef = ref<FormInstance>()
 const urgeForm = reactive({ content: '' })
 const urgeRules: FormRules = {
   content: [{ required: true, message: '催办内容不能为空', trigger: 'blur' }]
+}
+
+// 抄送人候选：首次打开审批/驳回弹窗时加载一次用户列表（排除停用账号）
+const userOptions = ref<{ id: string | number; label: string }[]>([])
+let usersLoaded = false
+async function loadUsers(): Promise<void> {
+  if (usersLoaded) return
+  usersLoaded = true
+  try {
+    const page = await userApi.list({ pageNum: 1, pageSize: 200 })
+    userOptions.value = page.list
+      .filter((item) => String(item.status) !== '0')
+      .map((item) => ({
+        id: item.id,
+        label: item.realName ? `${item.realName}（${item.username}）` : item.username
+      }))
+  } catch {
+    usersLoaded = false
+  }
 }
 
 async function load(): Promise<void> {
@@ -200,6 +249,8 @@ watch(
 function openApprove(): void {
   approveForm.comment = ''
   approveForm.attachments = []
+  approveForm.ccUserIds = []
+  void loadUsers()
   approveVisible.value = true
 }
 
@@ -214,6 +265,8 @@ function removeAttachment(id: string | number): void {
 
 function openReject(): void {
   rejectForm.comment = ''
+  rejectForm.ccUserIds = []
+  void loadUsers()
   rejectVisible.value = true
 }
 
@@ -228,7 +281,8 @@ async function submitApprove(): Promise<void> {
   try {
     await taskApi.approve(props.taskId, {
       comment: approveForm.comment || undefined,
-      attachmentIds: approveForm.attachments.length ? approveForm.attachments.map((item) => item.id) : undefined
+      attachmentIds: approveForm.attachments.length ? approveForm.attachments.map((item) => item.id) : undefined,
+      ccUserIds: approveForm.ccUserIds.length ? approveForm.ccUserIds.map((id) => Number(id)) : undefined
     })
     ElMessage.success('审批已通过，流程已流转')
     approveVisible.value = false
@@ -246,7 +300,10 @@ async function submitReject(): Promise<void> {
   if (!valid) return
   submitting.value = true
   try {
-    await taskApi.reject(props.taskId, { comment: rejectForm.comment })
+    await taskApi.reject(props.taskId, {
+      comment: rejectForm.comment,
+      ccUserIds: rejectForm.ccUserIds.length ? rejectForm.ccUserIds.map((id) => Number(id)) : undefined
+    })
     ElMessage.success('已驳回至发起人')
     rejectVisible.value = false
     emit('handled')
@@ -304,5 +361,9 @@ async function submitUrge(): Promise<void> {
 
 .mb-12 {
   margin-bottom: 12px;
+}
+
+.wf-cc-select {
+  width: 100%;
 }
 </style>

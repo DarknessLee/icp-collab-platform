@@ -7,6 +7,7 @@ import { deptApi, onlineApi, postApi, roleApi, userApi } from '@/api/system'
 import { usePageList } from '@/composables/usePageList'
 import { useUserStore } from '@/stores/user'
 import type { DeptNode, OnlineSession, PostRow, RoleRow, UserPayload, UserRow } from '@/types/system'
+import { maskEmail, maskMobile } from '@/utils/mask'
 
 const userStore = useUserStore()
 const { query, list, total, loading, load, search, reset, handlePageChange, handleSizeChange } =
@@ -319,6 +320,12 @@ onMounted(async () => {
         <el-table-column prop="realName" label="姓名" width="110" />
         <el-table-column prop="deptName" label="部门" min-width="140" show-overflow-tooltip />
         <el-table-column prop="postName" label="岗位" min-width="120" show-overflow-tooltip />
+        <el-table-column label="手机号" width="130">
+          <template #default="{ row }">{{ maskMobile(row.mobile) || '-' }}</template>
+        </el-table-column>
+        <el-table-column label="邮箱" min-width="170" show-overflow-tooltip>
+          <template #default="{ row }">{{ maskEmail(row.email) || '-' }}</template>
+        </el-table-column>
         <el-table-column label="角色" min-width="160" show-overflow-tooltip>
           <template #default="{ row }">{{ roleNames(row) }}</template>
         </el-table-column>

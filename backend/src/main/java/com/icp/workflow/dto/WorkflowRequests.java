@@ -26,10 +26,12 @@ public final class WorkflowRequests {
 
     public record ApproveRequest(String comment,
                                  Map<String, Object> formData,
-                                 List<Long> attachmentIds) {
+                                 List<Long> attachmentIds,
+                                 List<Long> ccUserIds) {
     }
 
-    public record RejectRequest(@NotBlank(message = "驳回意见不能为空") String comment) {
+    public record RejectRequest(@NotBlank(message = "驳回意见不能为空") String comment,
+                                List<Long> ccUserIds) {
     }
 
     public record UrgeRequest(String content) {

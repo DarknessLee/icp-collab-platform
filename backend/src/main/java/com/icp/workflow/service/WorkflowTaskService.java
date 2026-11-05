@@ -266,6 +266,7 @@ public class WorkflowTaskService {
             instanceService.onApproved(link, userId, message);
         }
         Task next = finished ? null : instanceService.currentTask(task.getProcessInstanceId());
+        sendCcMessages(link, userId, "审批通过", request == null ? null : request.ccUserIds());
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("taskId", taskId);
         result.put("processInstanceId", task.getProcessInstanceId());
@@ -301,6 +302,7 @@ public class WorkflowTaskService {
                 .changeState();
         instanceService.markLinkRejected(link);
         instanceService.onRejected(link);
+        sendCcMessages(link, userId, "已驳回", request.ccUserIds());
         Task current = instanceService.currentTask(task.getProcessInstanceId());
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("taskId", taskId);
@@ -359,6 +361,29 @@ public class WorkflowTaskService {
         result.put("urgeTime", urge.getUrgeTime());
         result.put("message", "催办成功");
         return result;
+    }
+
+    /**
+     * 审批/驳回时写入抄送站内信（coll_message.biz_type = CC），消息中心可按「抄送」筛选查看。
+     */
+    private void sendCcMessages(WfBusinessLink link, Long senderId, String actionText, java.util.List<Long> ccUserIds) {
+        if (ccUserIds == null || ccUserIds.isEmpty()) {
+            return;
+        }
+        Long current = userResolver.currentUserId();
+        java.util.LinkedHashSet<Long> targets = new java.util.LinkedHashSet<>(ccUserIds);
+        for (Long receiverId : targets) {
+            if (receiverId == null || receiverId.equals(current)) {
+                continue;
+            }
+            collMessageMapper.insertMessage(4,
+                    "流程抄送：" + link.getTitle(),
+                    "流程「" + link.getTitle() + "」" + actionText + "，抄送给你知悉。",
+                    "CC",
+                    link.getId(),
+                    senderId,
+                    receiverId);
+        }
     }
 
     private Task requireActiveTask(String taskId) {

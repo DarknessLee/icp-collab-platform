@@ -4,7 +4,6 @@ import { ElMessage, ElNotification } from 'element-plus'
 import { usePageList } from '@/composables/usePageList'
 import { messageApi } from '@/api/collab'
 import { useMessageStream } from '@/composables/useMessageStream'
-import type { PageQuery } from '@/types/system'
 import type { MessageRow } from '@/types/collab'
 
 const TYPE_OPTIONS = [
@@ -21,6 +20,7 @@ function isTaskRemind(row: MessageRow): boolean {
   return row.type === 3 && row.bizType === 'REMIND'
 }
 function typeText(row: MessageRow): string {
+  if (row.bizType === 'CC') return '抄送'
   return isTaskRemind(row) ? '任务提醒' : typeLabel(row.type)
 }
 function typeTag(type?: number): 'primary' | 'warning' | 'success' | 'info' | 'danger' {
@@ -32,11 +32,22 @@ function typeTag(type?: number): 'primary' | 'warning' | 'success' | 'info' | 'd
 }
 
 const { query, list, total, loading, load, search, handlePageChange, handleSizeChange } =
-  usePageList<MessageRow>((params) => messageApi.list(params as PageQuery), {
-    keyword: '',
-    type: undefined,
-    read: undefined
-  })
+  usePageList<MessageRow>(
+    (params) => {
+      const { type, read, ...rest } = params as Record<string, unknown>
+      return messageApi.list({
+        ...rest,
+        messageType: type,
+        readFlag: read === undefined ? undefined : read ? 1 : 0
+      })
+    },
+    {
+      keyword: '',
+      type: undefined,
+      read: undefined,
+      bizType: undefined
+    }
+  )
 
 const unreadCount = ref(0)
 const selection = ref<MessageRow[]>([])
@@ -147,6 +158,9 @@ const connectionText = computed(() => (connected.value ? '实时连接中' : '�
         <el-select v-model="query.type" placeholder="消息类型" clearable class="toolbar-select" @change="doSearch">
           <el-option v-for="item in TYPE_OPTIONS" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
+        <el-select v-model="query.bizType" placeholder="业务筛选" clearable class="toolbar-select" @change="doSearch">
+          <el-option label="流程抄送" value="CC" />
+        </el-select>
         <el-select v-model="query.read" placeholder="阅读状态" clearable class="toolbar-select" @change="doSearch">
           <el-option label="未读" :value="false" />
           <el-option label="已读" :value="true" />
@@ -160,7 +174,7 @@ const connectionText = computed(() => (connected.value ? '实时连接中' : '�
         <el-table-column type="selection" width="44" />
         <el-table-column label="类型" width="120" align="center">
           <template #default="{ row }">
-            <el-tag size="small" :type="typeTag(row.type)">{{ typeText(row) }}</el-tag>
+            <el-tag size="small" :type="row.bizType === 'CC' ? 'info' : typeTag(row.type)">{{ typeText(row) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="title" label="消息标题" min-width="220" show-overflow-tooltip>

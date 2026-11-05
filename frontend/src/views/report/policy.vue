@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { reportApi } from '@/api/report'
 import type { RiskDim, RiskDistribution } from '@/types/report'
 import echarts, { type EChartsInstance, type EChartsOption } from '@/utils/echarts'
@@ -28,6 +29,16 @@ const levelCounts = computed(() => {
 
 const chartRef = ref<HTMLDivElement>()
 let chart: EChartsInstance | null = null
+const router = useRouter()
+
+/** 风险等级名称 → 字典值（1 低 / 2 中 / 3 高），用于图表下钻 */
+function levelCodeOf(name: string): number | null {
+  if (/^\d+$/.test(name)) return Number(name)
+  if (name.includes('高')) return 3
+  if (name.includes('中')) return 2
+  if (name.includes('低')) return 1
+  return null
+}
 
 function renderChart(): void {
   if (!data.value || !chartRef.value) return
@@ -49,6 +60,13 @@ function renderChart(): void {
     ]
   }
   chart.setOption(option, true)
+  chart.off('click')
+  chart.on('click', (params) => {
+    if (dim.value !== 'level') return
+    const code = levelCodeOf(String(params.name ?? ''))
+    if (code === null) return
+    router.push({ path: '/icp/risk', query: { riskLevel: String(code) } })
+  })
 }
 
 function resizeChart(): void {
@@ -146,7 +164,7 @@ onBeforeUnmount(() => {
           <template #header>
             <div class="card-head">
               <span>风险分布</span>
-              <span class="card-head__desc">{{ DIM_OPTIONS.find((item) => item.value === dim)?.label }}</span>
+              <span class="card-head__desc">{{ DIM_OPTIONS.find((item) => item.value === dim)?.label }}<template v-if="dim === 'level'"> · 点击扇区可下钻</template></span>
             </div>
           </template>
           <el-empty v-if="!data || !data.items.length" description="暂无风险数据" :image-size="90" />

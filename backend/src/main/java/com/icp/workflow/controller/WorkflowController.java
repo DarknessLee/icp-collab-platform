@@ -159,7 +159,7 @@ public class WorkflowController {
     @AuditLog(module = "流程中心", action = "同意", businessType = "wf_business_link")
     public ApiResponse<Map<String, Object>> approve(@PathVariable("taskId") String taskId,
                                                     @RequestBody(required = false) WorkflowRequests.ApproveRequest request) {
-        return ApiResponse.ok(taskService.approve(taskId, request == null ? new WorkflowRequests.ApproveRequest(null, null, null) : request));
+        return ApiResponse.ok(taskService.approve(taskId, request == null ? new WorkflowRequests.ApproveRequest(null, null, null, null) : request));
     }
 
     @Operation(summary = "驳回")

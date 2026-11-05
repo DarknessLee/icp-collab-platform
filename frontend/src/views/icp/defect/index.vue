@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Download, Plus } from '@element-plus/icons-vue'
@@ -27,6 +28,11 @@ const {
   status: undefined,
   sourceType: undefined
 })
+
+// 报表图表下钻：/icp/defect?severity=&status= 带入筛选条件
+const route = useRoute()
+if (route.query.severity !== undefined) query.severity = Number(route.query.severity)
+if (route.query.status !== undefined) query.status = Number(route.query.status)
 
 const dialogVisible = ref(false)
 const dialogTitle = ref('登记缺陷')

@@ -166,10 +166,12 @@ export interface ApprovePayload {
   comment?: string
   formData?: Record<string, unknown>
   attachmentIds?: (string | number)[]
+  ccUserIds?: (string | number)[]
 }
 
 export interface RejectPayload {
   comment: string
+  ccUserIds?: (string | number)[]
 }
 
 export interface UrgePayload {

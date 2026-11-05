@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { Refresh } from '@element-plus/icons-vue'
 import { monitorApi, WORKFLOW_TYPES, workflowStatusText, workflowStatusType, workflowTypeName } from '@/api/workflow'
 import WorkflowInstanceDrawer from '@/components/WorkflowInstanceDrawer.vue'
@@ -16,6 +17,10 @@ const query = reactive<{ pageNum: number; pageSize: number; keyword: string; pro
   processKey: '',
   overdue: ''
 })
+
+// 报表图表下钻：/wf/monitor?processKey= 带入流程类型筛选
+const route = useRoute()
+if (route.query.processKey !== undefined) query.processKey = String(route.query.processKey)
 
 const drawerVisible = ref(false)
 const activeInstanceId = ref('')

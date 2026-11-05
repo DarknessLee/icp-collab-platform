@@ -46,8 +46,9 @@ public class MessageController {
             @RequestParam(defaultValue = "10") long pageSize,
             @RequestParam(required = false) Integer messageType,
             @RequestParam(required = false) Integer readFlag,
-            @RequestParam(required = false) String keyword) {
-        return ApiResponse.ok(service.page(pageNum, pageSize, messageType, readFlag, keyword));
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String bizType) {
+        return ApiResponse.ok(service.page(pageNum, pageSize, messageType, readFlag, keyword, bizType));
     }
 
     @Operation(summary = "批量标记已读")

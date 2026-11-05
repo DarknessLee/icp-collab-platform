@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { reportApi } from '@/api/report'
 import type { ProcessDurationReport, TaskStatReport } from '@/types/report'
 import echarts, { type EChartsInstance, type EChartsOption } from '@/utils/echarts'
@@ -24,6 +25,14 @@ const chartRef = ref<HTMLDivElement>()
 const monthChartRef = ref<HTMLDivElement>()
 let chart: EChartsInstance | null = null
 let monthChart: EChartsInstance | null = null
+const router = useRouter()
+
+/** 图表下钻：点击某流程的耗时柱 → 流程监控并带入流程类型 */
+function drillToMonitor(dataIndex: number): void {
+  const item = data.value?.items[dataIndex]
+  if (!item?.processKey) return
+  router.push({ path: '/wf/monitor', query: { processKey: item.processKey } })
+}
 
 const hours = (value?: number): string => `${(value ?? 0).toFixed(1)} 小时`
 
@@ -59,6 +68,10 @@ function renderCharts(): void {
       ]
     }
     chart.setOption(option, true)
+    chart.off('click')
+    chart.on('click', (params) => {
+      drillToMonitor(Number(params.dataIndex))
+    })
   }
   if (monthChartRef.value) {
     if (!monthChart) monthChart = echarts.init(monthChartRef.value)
@@ -182,7 +195,7 @@ onBeforeUnmount(() => {
       <template #header>
         <div class="card-head">
           <span>流程平均耗时</span>
-          <span class="card-head__desc">平均 / P95（小时）</span>
+          <span class="card-head__desc">平均 / P95（小时） · 点击柱形可下钻流程监控</span>
         </div>
       </template>
       <el-empty v-if="!data || !data.items.length" description="暂无流程耗时数据" :image-size="90" />

@@ -85,7 +85,7 @@ class WorkflowFlowIT {
         // 发起节点任务由发起人办理
         Map<String, Object> submitTask = findTodoFor(processInstanceId);
         assertThat(submitTask).isNotNull();
-        taskService.approve(String.valueOf(submitTask.get("taskId")), new WorkflowRequests.ApproveRequest("submit", null, null));
+        taskService.approve(String.valueOf(submitTask.get("taskId")), new WorkflowRequests.ApproveRequest("submit", null, null, null));
         assertThat(findTodoFor(processInstanceId)).isNull();
 
         // 审批节点由部门负责人办理
@@ -93,7 +93,7 @@ class WorkflowFlowIT {
         Map<String, Object> approveTask = findTodoFor(processInstanceId);
         assertThat(approveTask).isNotNull();
         Map<String, Object> result = taskService.approve(
-                String.valueOf(approveTask.get("taskId")), new WorkflowRequests.ApproveRequest("agree", null, null));
+                String.valueOf(approveTask.get("taskId")), new WorkflowRequests.ApproveRequest("agree", null, null, null));
         assertThat(result.get("finished")).isEqualTo(true);
         assertThat(result.get("linkStatus")).isEqualTo(WorkflowConstants.LINK_APPROVED);
 
@@ -105,11 +105,11 @@ class WorkflowFlowIT {
                 new WorkflowRequests.StartRequest(WorkflowConstants.PURCHASE_APPLY, null, "purchase", form2, null), null);
         String pi2 = String.valueOf(started2.get("processInstanceId"));
         Map<String, Object> submit2 = findTodoFor(pi2);
-        taskService.approve(String.valueOf(submit2.get("taskId")), new WorkflowRequests.ApproveRequest("submit", null, null));
+        taskService.approve(String.valueOf(submit2.get("taskId")), new WorkflowRequests.ApproveRequest("submit", null, null, null));
         authenticate(DEPT01_ID, "dept01", "DEPT_MANAGER", 4L);
         Map<String, Object> approve2 = findTodoFor(pi2);
         Map<String, Object> rejected = taskService.reject(
-                String.valueOf(approve2.get("taskId")), new WorkflowRequests.RejectRequest("budget not enough"));
+                String.valueOf(approve2.get("taskId")), new WorkflowRequests.RejectRequest("budget not enough", null));
         assertThat(rejected.get("linkStatus")).isEqualTo(WorkflowConstants.LINK_REJECTED);
 
         authenticate(ICP_ADMIN_ID, "icpadmin", "ICP_MANAGER", 2L);

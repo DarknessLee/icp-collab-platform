@@ -69,7 +69,7 @@ public class MessageService {
     }
 
     public PageResult<CollMessage> page(long pageNum, long pageSize, Integer messageType, Integer readFlag,
-                                        String keyword) {
+                                        String keyword, String bizType) {
         Long me = lookup.currentUserId();
         LambdaQueryWrapper<CollMessage> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(CollMessage::getReceiverId, me);
@@ -81,6 +81,9 @@ public class MessageService {
         }
         if (StringUtils.hasText(keyword)) {
             wrapper.and(w -> w.like(CollMessage::getTitle, keyword).or().like(CollMessage::getContent, keyword));
+        }
+        if (StringUtils.hasText(bizType)) {
+            wrapper.eq(CollMessage::getBizType, bizType);
         }
         wrapper.orderByAsc(CollMessage::getReadFlag).orderByDesc(CollMessage::getId);
         Page<CollMessage> page = messageMapper.selectPage(new Page<>(pageNum, pageSize), wrapper);

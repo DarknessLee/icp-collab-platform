@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { reportApi } from '@/api/report'
 import type { DefectStatReport, RectifyRateReport } from '@/types/report'
 import echarts, { type EChartsInstance, type EChartsOption } from '@/utils/echarts'
@@ -41,6 +42,18 @@ const chartRef = ref<HTMLDivElement>()
 const rateChartRef = ref<HTMLDivElement>()
 let chart: EChartsInstance | null = null
 let rateChart: EChartsInstance | null = null
+const router = useRouter()
+
+/** 图表下钻：点击柱状图按「严重程度 + 状态」跳到缺陷管理列表 */
+function drillToDefect(dataIndex: number, seriesIndex: number): void {
+  const severityValue = gradeSeverity.value[dataIndex]
+  const statusValue = gradeStatus.value[seriesIndex]
+  if (severityValue === undefined || statusValue === undefined) return
+  router.push({
+    path: '/icp/defect',
+    query: { severity: String(severityValue), status: String(statusValue) }
+  })
+}
 
 const rateText = (value?: number): string => `${((value ?? 0) * 100).toFixed(1)}%`
 
@@ -69,6 +82,10 @@ function renderDefectChart(): void {
     }))
   }
   chart.setOption(option, true)
+  chart.off('click')
+  chart.on('click', (params) => {
+    drillToDefect(Number(params.dataIndex), Number(params.seriesIndex))
+  })
 }
 
 function renderRateChart(): void {
@@ -226,7 +243,7 @@ onBeforeUnmount(() => {
           <template #header>
             <div class="card-head">
               <span>缺陷分布（严重程度 × 状态）</span>
-              <span class="card-head__desc">高风险缺陷口径：严重程度 1（重大）且未关闭</span>
+              <span class="card-head__desc">高风险缺陷口径：严重程度 1（重大）且未关闭 · 点击柱形可下钻</span>
             </div>
           </template>
           <el-empty v-if="!defects || !defects.items.length" description="暂无缺陷数据" :image-size="90" />

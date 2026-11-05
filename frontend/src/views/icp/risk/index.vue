@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Download, Plus } from '@element-plus/icons-vue'
@@ -20,6 +21,10 @@ const { query, list, total, loading, load, search, reset, handlePageChange, hand
     riskLevel: undefined,
     status: undefined
   })
+
+// 报表图表下钻：/icp/risk?riskLevel= 带入筛选条件
+const route = useRoute()
+if (route.query.riskLevel !== undefined) query.riskLevel = Number(route.query.riskLevel)
 
 const userStore = useUserStore()
 const showActions = computed(

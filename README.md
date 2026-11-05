@@ -177,7 +177,8 @@ icp-collab-platform/
 7. [docs/03-接口契约.md](docs/03-接口契约.md)、[docs/04-数据模型与种子.md](docs/04-数据模型与种子.md)、[docs/05-权限矩阵.md](docs/05-权限矩阵.md) —— 冻结契约
 8. 验收报告：[docs/06-M1](docs/06-M1-验收报告.md)、[docs/07-M2a](docs/07-M2a-验收报告.md)、[docs/08-M2b](docs/08-M2b-验收报告.md)、[docs/09-M2c](docs/09-M2c-验收报告.md)、[docs/10-M2d](docs/10-M2d-验收报告.md)、[docs/11-M2e](docs/11-M2e-验收报告.md)、[docs/12-M3](docs/12-M3-验收报告.md)、[docs/16-M4 交付验收](docs/16-M4-交付验收报告.md)
 9. 交付文档：[docs/13 部署与运维](docs/13-部署与运维手册.md)、[docs/14 用户手册](docs/14-用户手册.md)
-10. [docs/screenshots/INDEX.md](docs/screenshots/INDEX.md) —— 30 张最终截图索引
+10. [docs/18 软件使用说明（图文版，Word）](docs/18-企业内控与协同运营管理平台-使用说明-图文版.docx) —— 面向业务人员的功能与流程介绍（11 章 + 2 附录，30 张截图）
+11. [docs/screenshots/INDEX.md](docs/screenshots/INDEX.md) —— 30 张最终截图索引
 
 ## 交付边界（一期）
 

@@ -119,6 +119,18 @@ test('E13 协同运营：任务/文档权限下载/借阅审批归还/公告已�
   expect(allowRes.status).toBe(200);
   expect(allowRes.headers.get('content-type') ?? '').toContain('pdf');
 
+  // 在线预览：已发布 PDF 文档在文档中心可直接内嵌打开
+  await uiLogin(page, 'admin');
+  await page.goto('/coll/doc');
+  await page.locator('.toolbar-input input').first().fill(docName);
+  await page.locator('.toolbar-input input').first().press('Enter');
+  const previewRow = page.locator('.el-table__row').filter({ hasText: docName }).first();
+  await expect(previewRow).toBeVisible({ timeout: 15_000 });
+  await previewRow.locator('button', { hasText: '预览' }).click();
+  await expect(page.locator('.doc-preview__frame')).toBeVisible({ timeout: 20_000 });
+  await page.locator('.el-dialog__footer button', { hasText: '关闭' }).click();
+  await expect(page.locator('.doc-preview')).toHaveCount(0);
+
   /* ---------- 借阅：申请→审批→归还 ---------- */
   const borrowReason = `E2E 借阅 ${suffix}`;
   const borrow = await apiPost<{ id: number; processInstanceId?: string; workflow?: { processInstanceId?: string } }>(

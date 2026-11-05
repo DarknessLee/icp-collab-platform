@@ -388,6 +388,11 @@ public class DocService {
             doc.setCategoryName(categoryNames.get(doc.getCategoryId()));
             doc.setOwnerName(userNames.get(doc.getOwnerUserId()));
             doc.setDeptName(deptNames.get(doc.getDeptId()));
+            SysFile file = doc.getFileId() == null ? null : fileService.get(doc.getFileId());
+            if (file != null) {
+                doc.setFileName(file.getOriginalName());
+                doc.setContentType(file.getContentType());
+            }
             boolean owner = Objects.equals(doc.getOwnerUserId(), lookup.currentUserId());
             if (lookup.isAdmin() || owner) {
                 doc.setCanView(true);

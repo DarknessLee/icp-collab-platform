@@ -222,6 +222,63 @@ async function downloadDoc(row: DocRow): Promise<void> {
   }
 }
 
+/* ---------------- 在线预览（PDF / 图片内嵌预览；其余格式提示下载） ---------------- */
+type PreviewKind = 'pdf' | 'image' | 'other'
+const previewVisible = ref(false)
+const previewLoading = ref(false)
+const previewKind = ref<PreviewKind>('other')
+const previewName = ref('')
+const previewUrl = ref('')
+
+function previewKindOf(fileName?: string): PreviewKind {
+  const name = (fileName ?? '').toLowerCase()
+  const ext = name.includes('.') ? name.split('.').pop() ?? '' : ''
+  if (ext === 'pdf') return 'pdf'
+  if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'].includes(ext)) return 'image'
+  if (!ext) return 'other'
+  // 明确是不支持预览的格式（docx/xlsx/zip…），不必下载直接提示
+  return 'other'
+}
+
+/** 文件名无扩展名时（历史数据常见），按响应 Content-Type 兜底判断 */
+function previewKindOfType(contentType?: string): PreviewKind {
+  const type = (contentType ?? '').toLowerCase()
+  if (type.startsWith('image/')) return 'image'
+  if (type.includes('pdf')) return 'pdf'
+  return 'other'
+}
+
+function resetPreview(): void {
+  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
+  previewUrl.value = ''
+  previewLoading.value = false
+}
+
+async function openPreview(row: DocRow): Promise<void> {
+  resetPreview()
+  const name = row.fileName || row.title || ''
+  previewName.value = row.title || row.fileName || '文档预览'
+  previewKind.value = previewKindOf(name)
+  previewVisible.value = true
+  if (previewKind.value === 'other' && (name.includes('.') || !name)) return
+  previewLoading.value = true
+  try {
+    const blob = await docApi.download(row.id)
+    if (previewKind.value === 'other') previewKind.value = previewKindOfType(blob.type)
+    if (previewKind.value === 'other') return
+    const type = previewKind.value === 'pdf' ? 'application/pdf' : blob.type || 'image/png'
+    previewUrl.value = URL.createObjectURL(new Blob([blob], { type }))
+  } catch (error) {
+    previewVisible.value = false
+    const code = (error as { code?: number }).code
+    if (code === 40300) {
+      ElMessage.warning('无查看权限，可发起借阅后查看')
+    }
+  } finally {
+    previewLoading.value = false
+  }
+}
+
 /* ---------------- 文档权限（targetType + permType 原始三元组） ---------------- */
 const permVisible = ref(false)
 const permDoc = ref<DocRow>()
@@ -412,8 +469,9 @@ const canManageCategory = computed(
           <el-table-column prop="publishTime" label="发布时间" width="170">
             <template #default="{ row }">{{ row.publishTime || '—' }}</template>
           </el-table-column>
-          <el-table-column label="操作" width="250" fixed="right">
+          <el-table-column label="操作" width="300" fixed="right">
             <template #default="{ row }">
+              <el-button v-if="row.status === 1" link type="primary" @click="openPreview(row)">预览</el-button>
               <el-button v-if="row.status === 0" v-perm="'collab:doc:publish'" link type="primary" @click="publishDoc(row)">发布</el-button>
               <el-button v-if="row.status === 1" v-perm="'collab:doc:archive'" link type="warning" @click="archiveDoc(row)">归档</el-button>
               <el-button v-if="row.status === 1" v-perm="'collab:doc:download'" link type="primary" @click="downloadDoc(row)">下载</el-button>
@@ -526,6 +584,33 @@ const canManageCategory = computed(
       </template>
     </el-drawer>
 
+    <el-dialog
+      v-model="previewVisible"
+      :title="`文档预览 · ${previewName}`"
+      width="920px"
+      top="5vh"
+      destroy-on-close
+      @closed="resetPreview"
+    >
+      <div v-loading="previewLoading" class="doc-preview">
+        <iframe v-if="previewKind === 'pdf' && previewUrl" :src="previewUrl" class="doc-preview__frame" title="PDF 预览" />
+        <img
+          v-else-if="previewKind === 'image' && previewUrl"
+          :src="previewUrl"
+          class="doc-preview__image"
+          alt="文档预览"
+        />
+        <el-empty
+          v-else-if="previewKind === 'other'"
+          description="该格式暂不支持在线预览，请下载后查看（支持 PDF / 图片在线预览）"
+        />
+        <el-empty v-else description="正在加载预览…" />
+      </div>
+      <template #footer>
+        <el-button @click="previewVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
+
     <el-dialog v-model="categoryVisible" :title="categoryEditing ? '编辑分类' : '新增分类'" width="420px">
       <el-form :model="categoryForm" label-width="80px">
         <el-form-item label="分类名称" required>
@@ -600,5 +685,20 @@ const canManageCategory = computed(
 }
 .upload-area {
   width: 100%;
+}
+.doc-preview {
+  min-height: 320px;
+}
+.doc-preview__frame {
+  width: 100%;
+  height: 70vh;
+  border: 0;
+  display: block;
+}
+.doc-preview__image {
+  display: block;
+  max-width: 100%;
+  max-height: 70vh;
+  margin: 0 auto;
 }
 </style>

@@ -59,4 +59,12 @@ public class CollDoc extends BaseEntity {
 
     @TableField(exist = false)
     private List<CollDocPerm> perms;
+
+    /** 关联文件原始名（含扩展名），供在线预览判断格式 */
+    @TableField(exist = false)
+    private String fileName;
+
+    /** 关联文件 MIME 类型，文件名无扩展名时兜底判断预览方式 */
+    @TableField(exist = false)
+    private String contentType;
 }

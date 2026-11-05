@@ -27,6 +27,88 @@
 - **报表与预警**：工作台 8 卡 + 趋势、内控概览/制度/缺陷/任务/预警 5 个报表页、4 类预警与 5 个定时扫描任务。
 - **演示态**：60 个流程实例（40 待办 / 20 已完成 / 20 催办）、52 条制度、40 条风险、30 条缺陷、80 条协同任务；截图见 [`docs/screenshots/`](docs/screenshots/)。
 
+## 界面预览
+
+> 截图取自演示态（`scripts/demo-reset.ps1` 之后：60 实例 / 40 待办 / 20 催办，制度 52 / 风险 40 / 缺陷 30），前端为 4173 预览构建，登录账号 `admin`。完整 28 张与逐张说明见 [`docs/screenshots/INDEX.md`](docs/screenshots/INDEX.md)，重新采集用 `scripts\screenshots.ps1 -Take`。
+
+### 登录与工作台
+
+| 登录页 | 系统管理员工作台（8 卡 + 趋势） |
+| --- | --- |
+| ![登录页](docs/screenshots/s01-login.png) | ![工作台](docs/screenshots/s02-dashboard.png) |
+
+### 内控业务闭环（制度 → 风险 → 矩阵 → 评价 → 缺陷 → 整改）
+
+| 制度库（分类/版本/发布审批） | 制度详情 + 审批历史 |
+| --- | --- |
+| ![制度库](docs/screenshots/s04-policy-list.png) | ![制度详情](docs/screenshots/s26-policy-detail.png) |
+
+| 风险库（概率×影响评分定级） | 控制矩阵（覆盖率） |
+| --- | --- |
+| ![风险库](docs/screenshots/s05-risk-list.png) | ![控制矩阵](docs/screenshots/s06-matrix.png) |
+
+| 评价计划 → 任务 → 底稿 | 缺陷登记 → 整改 → 复核关闭 |
+| --- | --- |
+| ![评价](docs/screenshots/s07-evaluation.png) | ![缺陷台账](docs/screenshots/s08-defect.png) |
+
+| 整改复核（缺陷关闭留痕） |
+| --- |
+| ![整改复核](docs/screenshots/s09-rectify.png) |
+
+### 流程中心（Flowable 7，6 条内置流程）
+
+| 待办中心（40 待办） | 待办详情（表单 + 审批历史 + BPMN 高亮） |
+| --- | --- |
+| ![待办](docs/screenshots/s10-todo.png) | ![待办详情](docs/screenshots/s27-todo-detail.png) |
+
+| 流程监控（运行/超时/催办） | 采购申请 |
+| --- | --- |
+| ![流程监控](docs/screenshots/s11-monitor.png) | ![采购申请](docs/screenshots/s12-purchase.png) |
+
+| 用印申请 |
+| --- |
+| ![用印申请](docs/screenshots/s13-seal.png) |
+
+### 协同运营（任务 / 文档 / 公告 / 消息 / 日程）
+
+| 任务中心（子任务/评论/提醒） | 文档中心（目录/权限/版本） |
+| --- | --- |
+| ![任务中心](docs/screenshots/s15-collab-task.png) | ![文档中心](docs/screenshots/s16-doc-center.png) |
+
+| 文档借阅审批归还 | 公告通知（范围/已读） |
+| --- | --- |
+| ![文档借阅](docs/screenshots/s14-borrow.png) | ![公告](docs/screenshots/s17-notice.png) |
+
+| 消息中心（SSE 实时推送） | 日程月历 |
+| --- | --- |
+| ![消息中心](docs/screenshots/s18-message.png) | ![日程月历](docs/screenshots/s19-schedule.png) |
+
+### 报表与预警
+
+| 内控概览报表 | 缺陷统计（严重程度×状态） |
+| --- | --- |
+| ![内控概览](docs/screenshots/s03-report-overview.png) | ![缺陷统计](docs/screenshots/s20-report-defect.png) |
+
+| 预警中心（4 类规则 + 5 个定时扫描任务） |
+| --- |
+| ![预警中心](docs/screenshots/s21-alert.png) |
+
+### 系统管理与权限（RBAC + 数据权限 + 审计）
+
+| 角色菜单授权（540 条角色菜单） | 审计操作日志（含 traceId 追踪） |
+| --- | --- |
+| ![角色授权](docs/screenshots/s23-role-menu.png) | ![审计日志](docs/screenshots/s22-audit-log.png) |
+
+| 个人中心 | 越权访问 403（6 角色对比） |
+| --- | --- |
+| ![个人中心](docs/screenshots/s24-profile.png) | ![403](docs/screenshots/s25-forbidden-403.png) |
+
+### 移动端适配
+
+| 窄屏侧栏抽屉（响应式，≤768px） |
+| --- |
+| ![移动端](docs/screenshots/s28-mobile-sidebar.png) |
+
 ## 快速开始（本机已验证）
 
 前置：JDK 21（`D:\DevTools\jdk-21.0.13`）、Maven 3.9.9（`D:\DevTools\apache-maven-3.9.9`）、Node 24、本机 MySQL 8 安装（仅用其 mysqld 二进制，不启动 3306 服务）。

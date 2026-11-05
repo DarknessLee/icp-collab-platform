@@ -198,6 +198,12 @@ const staticPageRoutes: RouteRecordRaw[] = [
     meta: { title: '日程会议', permAny: ['collab:schedule:list', 'collab:schedule:get'] }
   },
   {
+    path: 'coll/meeting',
+    name: 'CollabMeeting',
+    component: () => import('@/views/collab/meeting/index.vue'),
+    meta: { title: '会议纪要', permAny: ['collab:meeting:list', 'collab:meeting:get'] }
+  },
+  {
     path: 'coll/message',
     name: 'CollabMessage',
     component: () => import('@/views/collab/message/index.vue'),
@@ -271,6 +277,12 @@ export const constantRoutes: RouteRecordRaw[] = [
     name: 'NotFound',
     component: () => import('@/views/error/404.vue'),
     meta: { title: '页面不存在', public: true, hidden: true }
+  },
+  {
+    path: '/screen',
+    name: 'DataScreen',
+    component: () => import('@/views/screen/index.vue'),
+    meta: { title: '数据大屏', hidden: true }
   },
   {
     path: '/',

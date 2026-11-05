@@ -1,6 +1,6 @@
-# M3 最终截图索引（S01–S28）
+# M6 最终截图索引（S01–S30）
 
-生成时间：2026-11-05T02:22:13.168Z
+生成时间：2026-11-05T03:45:39.174Z
 
 > 截图取自演示态（`scripts/demo-reset.ps1`）：**60 实例 / 40 待办 / 20 催办**，种子基准日 **2026-10-31**；前端为 4173 预览构建。
 > 制度 52 条（其中 seed-flow 追加 12 条流程政策）、风险 40 条、缺陷 30 条。
@@ -35,3 +35,5 @@
 | S26 | `s26-policy-detail.png` | 制度详情 + 审批历史 | `/icp/policy` | icpadmin | 52 / 40 / 30 |
 | S27 | `s27-todo-detail.png` | 待办详情（表单 + 历史 + BPMN） | `/wf/todo` | icpadmin | 52 / 40 / 30 |
 | S28 | `s28-mobile-sidebar.png` | 窄屏侧栏抽屉 | `/dashboard` | admin | 52 / 40 / 30 |
+| S29 | `s29-meeting.png` | 会议纪要 + 详情抽屉 | `/coll/meeting` | admin | 52 / 40 / 30 |
+| S30 | `s30-screen.png` | 数据大屏（运营驾驶舱） | `/screen` | admin | 52 / 40 / 30 |

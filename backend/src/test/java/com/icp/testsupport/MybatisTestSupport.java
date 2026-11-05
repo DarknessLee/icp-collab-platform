@@ -6,6 +6,7 @@ import com.icp.collab.entity.CollDoc;
 import com.icp.collab.entity.CollDocBorrow;
 import com.icp.collab.entity.CollDocCategory;
 import com.icp.collab.entity.CollDocPerm;
+import com.icp.collab.entity.CollMeeting;
 import com.icp.collab.entity.CollMessage;
 import com.icp.collab.entity.CollNotice;
 import com.icp.collab.entity.CollSchedule;
@@ -53,7 +54,7 @@ public final class MybatisTestSupport {
                 SysDictType.class, SysDictData.class, SysConfig.class, SysJob.class, SysFile.class,
                 CollTask.class, CollTaskComment.class, CollMessage.class, CollDoc.class,
                 CollDocCategory.class, CollDocPerm.class, CollDocBorrow.class, CollNotice.class,
-                CollSchedule.class);
+                CollSchedule.class, CollMeeting.class);
         for (Class<?> entity : entities) {
             TableInfoHelper.initTableInfo(assistant, entity);
         }

@@ -228,3 +228,41 @@ export interface CalendarItem {
   type?: number
   status?: number
 }
+
+/** 会议状态：0 待召开 / 1 已召开 / 2 已取消 */
+export type MeetingStatus = 0 | 1 | 2
+
+/** 会议类型字典 icp_meeting_type：0 周例会 / 1 专题会 / 2 评审会 / 3 培训会 */
+export interface MeetingRow {
+  id: CollabId
+  meetingNo?: string
+  title: string
+  /** 0 周例会 / 1 专题会 / 2 评审会 / 3 培训会 */
+  meetingType?: number
+  startTime?: string
+  endTime?: string
+  location?: string
+  organizerId?: CollabId
+  organizerName?: string
+  deptId?: CollabId
+  deptName?: string
+  /** 参会人中文名，逗号分隔（后端派生字段） */
+  attendeeNames?: string
+  attendeeCount?: number
+  status?: MeetingStatus
+  minutes?: string
+  remark?: string
+  createTime?: string
+}
+
+export interface MeetingPayload {
+  title: string
+  /** 后端实体为 VARCHAR，按字典值字符串传输（"0"~"3"） */
+  meetingType?: number | string
+  startTime?: string
+  endTime?: string
+  location?: string
+  /** 参会人中文名，逗号分隔 */
+  attendeeNames?: string
+  remark?: string
+}

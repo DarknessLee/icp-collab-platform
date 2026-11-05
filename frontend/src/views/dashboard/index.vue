@@ -274,6 +274,7 @@ onBeforeUnmount(() => {
         >
           {{ action.title }}
         </el-button>
+        <el-button type="primary" plain @click="go('/screen')">数据大屏</el-button>
       </div>
     </div>
 

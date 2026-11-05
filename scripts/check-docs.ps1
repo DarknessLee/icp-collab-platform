@@ -2,14 +2,14 @@
 # check-docs.ps1 - documentation consistency gate for the delivery (ASCII, PS 5.1)
 #
 # Checks:
-#   1. docs numbering 00..15 present (00-..md), no duplicates, no gaps
+#   1. docs numbering 00..14 and 16..17 present (00-..md), no duplicates
 #   2. every numbered doc is non-trivial and starts with a markdown H1
 #   3. relative markdown links in README/STATUS/docs/*.md resolve to real files
 #      (docs/16-* is allowed to be absent until the M4 report lands)
 #   4. README.md / STATUS.md / docs/12-M3-* carry the platform name + V1.0
 #   5. STATUS.md records a real commit hash (7-40 hex) and the M4 stage
 #   6. docs/screenshots holds >= 25 PNG and INDEX.md lists every PNG
-#   7. docs/13 (deploy), docs/14 (user manual), docs/15 (copyright list) exist
+#   7. docs/13 (deploy), docs/14 (user manual) exist
 #
 # Exit code: 0 = all checks pass, 1 = at least one failed.
 #
@@ -61,7 +61,7 @@ Write-Host '  check-docs'
 Write-Host '=================================================================='
 
 # ------------------------------ 1. numbering ------------------------------
-Write-Host '[1] docs numbering 00..15'
+Write-Host '[1] docs numbering 00..14,16,17'
 $numbered = @{}
 $allDocs = @(Get-ChildItem -Path $docsDir -Filter *.md -File -ErrorAction SilentlyContinue)
 foreach ($f in $allDocs) {
@@ -75,13 +75,13 @@ foreach ($f in $allDocs) {
     }
 }
 $missing = @()
-foreach ($n in 0..15) {
+foreach ($n in @(0..14) + 16 + 17) {
     if (-not $numbered.ContainsKey($n)) { $missing += ('{0:D2}' -f $n) }
 }
-Check 'numbered docs 00-15 all present' ($missing.Count -eq 0) ('missing: ' + ($missing -join ', '))
+Check 'numbered docs 00-14 + 16-17 all present' ($missing.Count -eq 0) ('missing: ' + ($missing -join ', '))
 $dupes = @($numbered.Keys | Where-Object { $numbered[$_] -gt 1 } | Sort-Object)
 Check 'no duplicate doc numbers' ($dupes.Count -eq 0) ('duplicated: ' + (($dupes | ForEach-Object { '{0:D2}' -f $_ }) -join ', '))
-Check 'docs 13/14/15 delivered' ((Test-Path (Join-Path $docsDir '13-*.md')) -and (Test-Path (Join-Path $docsDir '14-*.md')) -and (Test-Path (Join-Path $docsDir '15-*.md')))
+Check 'docs 13/14 delivered' ((Test-Path (Join-Path $docsDir '13-*.md')) -and (Test-Path (Join-Path $docsDir '14-*.md')))
 
 # ------------------------------ 2. doc content ------------------------------
 Write-Host '[2] doc headings'

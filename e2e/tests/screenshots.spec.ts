@@ -32,7 +32,7 @@ interface ScreenshotCase {
   prepare?: (page: Page) => Promise<void>;
 }
 
-test.describe('S01–S28 最终截图', () => {
+test.describe('S01–S30 最终截图', () => {
   test.skip(process.env.E2E_DEMO !== '1', '最终截图仅在演示态运行（npm run e2e:shots）');
 
   test('生成演示态最终截图与 INDEX.md', async ({ page }) => {
@@ -106,6 +106,35 @@ test.describe('S01–S28 最终截图', () => {
           await target.locator('.sidebar.mobile-open').waitFor({ state: 'visible', timeout: 10_000 });
         },
       },
+      {
+        id: 'S29',
+        file: 's29-meeting.png',
+        desc: '会议纪要 + 详情抽屉',
+        path: '/coll/meeting',
+        role: 'admin',
+        prepare: async (target) => {
+          // S28 会把视口缩到 390x844，这里恢复桌面尺寸
+          await target.setViewportSize({ width: 1440, height: 900 });
+          await target.locator('.el-table__row').first().waitFor({ state: 'visible', timeout: 20_000 });
+          // 选一条「已召开」的会议（有纪要），演示详情抽屉的纪要展示
+          const row = target.locator('.el-table__row').filter({ hasText: '已召开' }).first();
+          await row.locator('button:has-text("详情")').click();
+          const drawer = target.locator('.el-drawer:visible').first();
+          await drawer.waitFor({ state: 'visible', timeout: 20_000 });
+          await drawer.locator('.meeting-detail__title').waitFor({ state: 'visible', timeout: 15_000 });
+        },
+      },
+      {
+        id: 'S30',
+        file: 's30-screen.png',
+        desc: '数据大屏（运营驾驶舱）',
+        path: '/screen',
+        role: 'admin',
+        prepare: async (target) => {
+          await target.locator('.screen-panel').first().waitFor({ state: 'visible', timeout: 25_000 });
+          await target.waitForTimeout(2500);
+        },
+      },
     ];
 
     const rows: string[] = [];
@@ -143,7 +172,7 @@ test.describe('S01–S28 最终截图', () => {
     }
 
     const index = [
-      '# M3 最终截图索引（S01–S28）',
+      '# M6 最终截图索引（S01–S30）',
       '',
       `生成时间：${new Date().toISOString()}`,
       '',
@@ -157,6 +186,6 @@ test.describe('S01–S28 最终截图', () => {
     ].join('\n');
     await writeFile(path.join(SHOTS_DIR, 'INDEX.md'), index, 'utf8');
 
-    expect(rows.length).toBe(28);
+    expect(rows.length).toBe(30);
   });
 });

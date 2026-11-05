@@ -355,7 +355,7 @@ $configCount = SqlLong 'SELECT COUNT(*) FROM sys_config WHERE deleted=0'
 if ($RunRegression) {
     Check 'R21 seed counts unchanged (skipped in -RunRegression mode)' $true "menu=$menuCount roleMenu=$roleMenuCount config=$configCount"
 } else {
-    Check 'R21 seed counts unchanged' (($menuCount -eq 179) -and ($roleMenuCount -eq 540) -and ($configCount -eq 16)) "menu=$menuCount roleMenu=$roleMenuCount config=$configCount"
+    Check 'R21 seed counts unchanged' (($menuCount -eq 184) -and ($roleMenuCount -eq 558) -and ($configCount -eq 16)) "menu=$menuCount roleMenu=$roleMenuCount config=$configCount"
 }
 $summaryAfter = Api 'GET' '/dashboard/summary' $null $hAdmin
 Check 'R21 reports still reachable' (($summaryAfter.code -eq 0) -and ([long]$summaryAfter.data.policies.total -ge 1)) "code=$($summaryAfter.code)"

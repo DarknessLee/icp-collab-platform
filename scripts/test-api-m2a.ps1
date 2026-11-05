@@ -123,8 +123,8 @@ Write-Case 'login: wrong password -> 40101' ($r.status -eq 200 -and $r.code -eq 
 $adminLogin = $logins['admin']
 $adminPerms = @($adminLogin.permissions)
 $adminNodes = Count-MenuNodes $adminLogin.menus
-Write-Case 'menu: admin perms = 95' ($adminPerms.Count -eq 95) ("perms=" + $adminPerms.Count)
-Write-Case 'menu: admin tree nodes = 45' ($adminNodes -eq 45) ("nodes=" + $adminNodes)
+Write-Case 'menu: admin perms = 100' ($adminPerms.Count -eq 100) ("perms=" + $adminPerms.Count)
+Write-Case 'menu: admin tree nodes = 46' ($adminNodes -eq 46) ("nodes=" + $adminNodes)
 $newPerms = @('system:job:list', 'system:job:edit', 'system:job:run', 'system:post:add',
     'system:post:edit', 'system:post:delete', 'system:role:add', 'system:role:edit',
     'system:role:delete', 'system:menu:add', 'system:menu:edit', 'system:menu:delete',

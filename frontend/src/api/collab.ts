@@ -10,6 +10,8 @@ import type {
   DocPayload,
   DocPermItem,
   DocRow,
+  MeetingPayload,
+  MeetingRow,
   MessageRow,
   NoticePayload,
   NoticeRow,
@@ -214,6 +216,28 @@ function mapCalendar(o: Record<string, unknown>): CalendarItem {
     end: String(o.end ?? o.endTime ?? ''),
     type: num(o.type),
     status: num(o.status)
+  }
+}
+
+function mapMeeting(o: Record<string, unknown>): MeetingRow {
+  return {
+    id: (o.id ?? o.meetingId) as MeetingRow['id'],
+    meetingNo: str(o.meetingNo ?? o.meetingCode),
+    title: String(o.title ?? o.meetingTitle ?? ''),
+    meetingType: num(o.meetingType),
+    startTime: formatTime(o.startTime),
+    endTime: formatTime(o.endTime),
+    location: str(o.location),
+    organizerId: str(o.organizerId),
+    organizerName: str(o.organizerName ?? o.createByName),
+    deptId: str(o.deptId),
+    deptName: str(o.deptName),
+    attendeeNames: str(o.attendeeNames),
+    attendeeCount: num(o.attendeeCount),
+    status: num(o.status) as MeetingRow['status'],
+    minutes: str(o.minutes),
+    remark: str(o.remark),
+    createTime: formatTime(o.createTime)
   }
 }
 
@@ -445,5 +469,21 @@ export const scheduleApi = {
   remove: (id: ScheduleRow['id']) => http<void>({ url: `/schedules/${id}`, method: 'delete' }),
   cancel: (id: ScheduleRow['id']) =>
     http<void>({ url: `/schedules/${id}/cancel`, method: 'post' })
+}
+
+/** 会议纪要（M6-W3）：列表/详情/新建/编辑/删除/写纪要 */
+export const meetingApi = {
+  list: (params: Record<string, unknown>) =>
+    http<unknown>({ url: '/meetings', method: 'get', params: pageQuery(params) }).then((data) =>
+      page(data, mapMeeting)
+    ),
+  detail: (id: MeetingRow['id']) =>
+    http<unknown>({ url: `/meetings/${id}`, method: 'get' }).then((data) => mapMeeting(raw(data))),
+  create: (data: MeetingPayload) => http<unknown>({ url: '/meetings', method: 'post', data }),
+  update: (id: MeetingRow['id'], data: Partial<MeetingPayload>) =>
+    http<unknown>({ url: `/meetings/${id}`, method: 'put', data }),
+  remove: (id: MeetingRow['id']) => http<void>({ url: `/meetings/${id}`, method: 'delete' }),
+  saveMinutes: (id: MeetingRow['id'], minutes: string) =>
+    http<void>({ url: `/meetings/${id}/minutes`, method: 'put', data: { minutes } })
 }
 

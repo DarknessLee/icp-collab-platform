@@ -21,9 +21,9 @@
 | 待办/已办/抄送/催办/流程监控/超时预警 | 已实现：待办/已办/我发起、同意/驳回/催办、monitor 统计与 overdue（timeout.hours=48）；抄送落 `coll_message(CC)` 无独立页 | 6 角色待办 0/40/0/17/4/0；verify-m2c C04–C15 PASS；seed-flow 80/0 | docs/03 §5.1、docs/09 | 已实现 |
 | 审批历史留痕/意见/附件；bpmn-js 只读流程图 | 已实现：历史时间线（ACT_HI_*）、审批意见/附件、`/diagram-highlight` + bpmn-js 17.11.1 只读高亮（无 DI 坐标时前端自动布局） | 前端待办详情/高亮用例 PASS；verify-m2c C13/C14 PASS | docs/03、docs/09 | 已实现（一级审批，无加签/转办） |
 | 任务中心：计划/任务/子任务/优先级/截止提醒 | 已实现：任务 80（含子任务）/评论 30 + 状态机 0/1/2/3 + 优先级/截止 + 提醒落站内消息（type=3）+ 逾期查询期计算 | test-api-m2d 109/109；verify-m2d 44/44；前端 mock 43/43 | docs/03 §6.1、docs/10 | 已实现 |
-| 文档中心：目录/权限/版本/本地下载 | 已实现：分类树/文档 40 CRUD + 发布/归档 + `coll_doc_perm`（type×perm 三元组）+ 下载鉴权（发布→权限→借阅）+ 版本次版本+1 | 独立验收 44/44（未授权 40300→授权 200、版本 V1.1） | docs/03 §6.1、docs/10 | 已实现（无在线预览，预览预留） |
-| 公告/站内信（SSE）/日程 | 已实现：公告 12（全公司/部门/角色范围 + 已读幂等 + 关闭）、站内信 60 + 批量已读 + SSE 实时推送（access_token/心跳/3 连接）、日程 20 + 月历 + 取消=3 | SSE 事件/坏 token 401/未读归零实测；verify-m2d 44/44 | docs/03 §6.1、docs/10 | 已实现 |
-| 报表看板：覆盖率/风险分布/整改完成率/流程耗时/钻取 | 已实现：`/dashboard/summary|trend` + 报表 6 端点 + 5 报表页 + 工作台 8 卡真实数据；实时 SQL 聚合、60s 缓存；`report:*` 权限 + 数据范围 | verify-m2e 46/46；test-api-m2e 62/0；前端 126/126 + 47/47；截图 43 张 | docs/03 §7.1、docs/11 | 已实现 |
+| 文档中心：目录/权限/版本/本地下载/在线预览 | 已实现：分类树/文档 40 CRUD + 发布/归档 + `coll_doc_perm`（type×perm 三元组）+ 下载鉴权（发布→权限→借阅）+ 版本次版本+1 + PDF/图片在线预览弹窗（列表补 fileName/contentType） | 独立验收 44/44（未授权 40300→授权 200、版本 V1.1）；E13 预览断言 PASS | docs/03 §6.1、docs/10、docs/14 §5.2 | 已实现 |
+| 公告/站内信（SSE）/日程//抄送筛选 | 已实现：公告 12（全公司/部门/角色范围 + 已读幂等 + 关闭）、站内信 60 + 批量已读 + SSE 实时推送（access_token/心跳/3 连接）、日程 20 + 月历 + 取消=3；站内信新增「流程抄送」业务筛选（bizType=CC） | SSE 事件/坏 token 401/未读归零实测；verify-m2d 44/44；E16 抄送 PASS | docs/03 §6.1、docs/10、docs/14 §5.3 | 已实现 |
+| 报表看板：覆盖率/风险分布/整改完成率/流程耗时/钻取 | 已实现：`/dashboard/summary|trend` + 报表 6 端点 + 5 报表页 + 工作台 8 卡真实数据；实时 SQL 聚合、60s 缓存；图表点击下钻（缺陷图→缺陷列表、风险饼图→风险列表、任务图→流程监控，带 URL 参数）；数据大屏 `/screen`（6 KPI + 6 面板 + 60s 刷新，复用现有 API）；`report:*` 权限 + 数据范围 | verify-m2e 46/46；test-api-m2e 62/0；E15 下钻 + E19 大屏 PASS；截图 30 张 | docs/03 §7.1、docs/11、docs/17 | 已实现 |
 | 预警：超时任务/到期制度/高风险缺陷 + 定时任务 | 已实现：`/alerts` 4 类实时计算 + `/alerts/count`；`@Scheduled` 10min 扫描 5 handler 写 `coll_message(type=3)` + 审计（同日去重）；`POST /jobs/{id}/run` 真实执行 | verify-m2e V32–V45；test-api-m2e R09–R14；前端预警 4 tab | docs/03 §7.1、docs/11 | 已实现 |
 | 审计查询：登录/操作/变更日志（审计员只读） | 已实现：auditor 仅「日志审计」菜单，三 tab 查询 + 详情抽屉 | 前端 7/7；auditor `/logs/oper` 200、`/logs/changes` 200、写接口 403 | docs/03、docs/07 | 已实现 |
 | 字典/参数/附件/健康检查 | 已实现：字典/参数 CRUD、附件上传下载（20MB + 类型白名单）、`/actuator/health` UP | 前端 file 8/8；后端 41300 用例；health UP | docs/03、docs/07 | 已实现 |
@@ -34,13 +34,16 @@
 | bpmn-js 在线设计器、低代码表单设计器 | 未开始（一期仅只读查看） | — | — | 暂缓 |
 | ES 全文检索、在线文档预览/编辑、委托转办 | 未开始 | — | — | 暂缓 |
 | 移动端 App/H5/小程序 | 不做（前端仅响应式适配） | — | docs/00 | 不做 |
-| 合同/采购/费用业务插件 | 未开始（二期） | — | — | 暂缓 |
+| 会议纪要：排期/参会人/纪要/状态 | 已实现（M6-W3）：`coll_meeting`（Flyway V4、20 条种子、`HY-2026-###` 编码、状态 0待召开/1已召开/2已取消）+ 列表/详情/新建/编辑/删除/写纪要 API 与页面；数据范围 + 审计 | MeetingServiceTest 7 项；mvn 177 tests；E18 会议纪要 PASS | docs/03 §6.2、docs/04、docs/05 §10、docs/14 §5.4 | 已实现 |
+| 数据大屏（运营驾驶舱） | 已实现（M6-W3）：`/screen` 全屏独立页，6 KPI + 6 面板（趋势/风险分布/缺陷分布/流程 TOP6/部门覆盖率/预警滚动），60s 刷新，工作台入口 | E19 大屏 PASS（6 KPI/6 panel/≥5 canvas/返回工作台） | docs/14 §5.5、docs/17 | 已实现 |
+| 采购按金额分级审批 | 已实现（M6-W2）：`purchase_apply` 增 `amountGateway`，≤5000 部门审批后结束，>5000 追加 ROLE_MANAGEMENT；`purchaseAmount` 由 formData.amount 注入 | E17 两用例 PASS；E10 回归 PASS | docs/03 §5、docs/14 §4.4、docs/17 | 已实现 |
+| 合同/采购/费用业务插件（合同/费用） | 未开始（二期；采购已有流程 Demo） | — | — | 暂缓 |
 | K8s/Helm、Prometheus/Grafana/Loki、GitLab CI | 未开始（二期，目录 M4 预留） | — | docs/10 | 暂缓 |
 | 真实 Redis / MinIO / 消息队列 | 进程内 Caffeine + 本地存储替代，接口已留（D06/D07） | 缓存/存储类已实现 | docs/00、docs/10 | 暂缓 |
 | Docker Compose 一键部署 | 已交付 `deploy/` 11 文件（Compose 五服务 + Nginx + Dockerfile + MySQL init + deploy/backup/restore）；本机无 Docker 未实测（D04/Q1） | 静态检查；env 覆盖实测（18080 健康 + login code=0） | deploy/README、docs/13 §5 | 已实现（交付件未本机拉起） |
 | 本地一键启动（MySQL 3307 + 后端 + 前端） | 已完成：`scripts/start-local.ps1` / `stop-local.ps1` | start-local 16.4s（幂等 0.5s）、本机冷启动 45.9s；stop-local -WithDb 6.7s | docs/13 §4、docs/16 §4 | 已实现 |
 | 备份/恢复脚本与一次恢复演练 | 已完成：`backup.ps1`（mysqldump + 附件 + manifest sha256） / `restore.ps1` | 备份 1.1s → 破坏 → 恢复 16.7s：db-validate 15/15、policy 40/task 80/files 137 全恢复 | docs/13 §8、docs/16 §4 | 已实现 |
-| 60 页源码/60 页手册/申请表（M5） | 一期不做（用户确认 Q3） | — | docs/15 | 暂缓 |
+| 60 页源码/60 页手册/申请表（M5） | 已移除：用户 2026-11-05 确认软著材料不再负责 | — | DECISIONS D11 | 不做 |
 
 ## 二、验收场景（方案 §九）
 
@@ -70,9 +73,9 @@
 | 流程中心 9 页（M2c） | 已完成（待办/已办/我发起/监控/实例/定义/采购/用印/借阅 + 详情抽屉 + bpmn 高亮） | 前端 69/55/28/21；verify-m2c 77/77 ×3 | docs/09 | 已实现 |
 | 协同运营 6 页（M2d） | 已完成（任务/文档/借阅/公告/消息 SSE/日程月历 + 权限抽屉） | verify-m2d 44/44；test-api-m2d 109/109；前端 mock 43/43 | docs/10 | 已实现 |
 | 各阶段验收报告 | M1–M4 报告全部完成（docs/06–12 + docs/16） | 各报告含实际命令与数字 | docs/06–12、docs/16 | 已实现 |
-| E2E 套件（Playwright）与验收脚本（M3） | 已完成：`e2e/` E01–E14 + screenshots.spec（24 tests / 15 files）；`scripts/demo-reset/test-api/test-e2e/screenshots/build/verify` | test-e2e 23 passed / 1 skipped / 0 failed；verify 全链路 PASS 317.5s | docs/12、e2e/README 模板 | 已实现 |
-| 最终截图（≥25 张） | 已完成（M3）：`docs/screenshots/` S01–S28（28 张 1440×900，s28 窄屏）+ INDEX.md，附种子数字 | `screenshots.ps1` 校验 PASS（28 PNG ≥ 25） | docs/screenshots、docs/12 §6 | 已实现 |
-| 部署运维手册 / 用户手册 / 软著清单 | 已完成（M4）：docs/13（13 章）、docs/14（10 章）、docs/15（结构与映射） | 人工核对 + `check-docs` PASS=16 | docs/13、docs/14、docs/15 | 已实现 |
-| 文档一致性门禁（check-docs） | 已完成：编号/H1/相对链接/名称版本/STATUS commit/28 截图/INDEX 全覆盖 | `check-docs.ps1` PASS=16 FAIL=0 | docs/16 §4、scripts/check-docs.ps1 | 已实现 |
+| E2E 套件（Playwright）与验收脚本（M3/M6） | 已完成：`e2e/` E01–E19 + screenshots.spec（32 tests / 19 files）；`scripts/demo-reset/test-api/test-e2e/screenshots/build/verify` | test-e2e 31 passed / 1 skipped / 0 failed；verify 全链路 PASS | docs/12、docs/17、e2e/README | 已实现 |
+| 最终截图（≥25 张） | 已完成（M3+M6）：`docs/screenshots/` S01–S30（30 张 1440×900，s28 窄屏、s29 会议纪要、s30 数据大屏）+ INDEX.md，附种子数字 | `screenshots.ps1` 校验 PASS（30 PNG ≥ 25） | docs/screenshots、docs/12 §6 | 已实现 |
+| 部署运维手册 / 用户手册 | 已完成（M4）：docs/13（13 章）、docs/14（10 章） | 人工核对 + `check-docs` PASS=16 | docs/13、docs/14 | 已实现 |
+| 文档一致性门禁（check-docs） | 已完成：编号/H1/相对链接/名称版本/STATUS commit/30 截图/INDEX 全覆盖 | `check-docs.ps1` PASS=16 FAIL=0 | docs/16 §4、scripts/check-docs.ps1 | 已实现 |
 | M4 交付验收报告 | 已完成：`docs/16-M4-交付验收报告.md`（10 节） | 命令结果表 13 项 + 6 场景对照 | docs/16 | 已实现 |
 

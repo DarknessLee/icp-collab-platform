@@ -1,12 +1,17 @@
 # 当前状态
 
 - **软件名称/版本**：企业内控与协同运营管理平台 V1.0（未发表）
-- **当前阶段**：**M4 交付（已闭环）；M0–M4 全部完成**，一期范围交付完毕（M5 软著材料按 D11 暂缓）
-- **最新 commit**：M4 `12bef3e`（feat(m4)：Compose 11 文件、start-local/backup/restore/check-docs、env 化配置、docs/13–16）；M3 `5ad3d03`（+ 回填 `46033bc`）；M2e `c4668ed` + `088415f`；M2d `f57c831` + `804047a`；M2c `e334734` + `fc97f14`；M2b `fa32065` + `34683e1`；M2a `7f11af8` + `3531d5c`；M1 `1c9570a` + `6325b7a`
+- **当前阶段**：**M6 演示增强（W1–W3 代码与验证完成，待最终提交）**；一期 M0–M4 已闭环交付；M5 软著材料已按用户决定移除（D11 更新）
+- **最新 commit**：M6-W2 `524db6b`（采购金额分级审批）；M6-W1 `594ac6f`（图表下钻、列表脱敏、审批抄送与消息筛选）与 `c46aebd`（文档在线预览）；M4 `12bef3e`（+ 回填 `2b295c1`）；M3 `5ad3d03`（+ 回填 `46033bc`）；M2e `c4668ed`；M2d `f57c831`；M2c `e334734`；M2b `fa32065`；M2a `7f11af8`；M1 `1c9570a`
 - **远端**：`origin` → `http://192.168.1.100:3300/liyunqing/icp-collab-platform.git`（master 跟踪 origin/master）
 - **交付入口**：`scripts\start-local.ps1` → 浏览器 `http://127.0.0.1:4173`（演示账号 `admin` 等，密码 `Icp@2026`）；一键复现演示态 `scripts\demo-reset.ps1`
+- **M6 演示增强（docs/17）**：
+  - **W1（已完成并推送）**：文档中心 PDF/图片在线预览（`c46aebd`）；报表图表点击下钻（缺陷图 → 缺陷列表、风险饼图 → 风险列表、任务图 → 流程监控）、用户列表手机号/邮箱脱敏、审批/驳回可选抄送人 + 消息中心「流程抄送」筛选（`594ac6f`，E15/E16 用例、截图重出）
+  - **W2（已完成并推送）**：采购申请按金额分级审批——`purchase_apply` 增加 `amountGateway`，≤5000 部门审批后结束，>5000 追加管理层审批；流程变量 `purchaseAmount` 由 `formData.amount` 注入（`524db6b`，E17 两用例）
+  - **W3（代码/E2E/文档完成）**：会议纪要模块 `coll_meeting`（Flyway V4、20 条种子、`HY-2026-###` 编码、数据范围、审计）+ 数据大屏 `/screen`（6 KPI + 6 面板、60s 刷新，复用现有 API）；E18/E19 用例、截图 S29/S30
+  - 暂缓/不做：导出扩面（暂缓）、W4 合同管理（不做）
 - **M4 验收结论**：通过（详见 `docs/16-M4-交付验收报告.md`）
-  - 交付：`deploy/` 11 文件（Compose 五服务 / Nginx / Dockerfile / MySQL init / deploy·backup·restore）；`start-local` / `stop-local` / `backup` / `restore` / `check-docs` 脚本；`docs/13` 部署运维、`docs/14` 用户手册、`docs/15` 软著清单
+  - 交付：`deploy/` 11 文件（Compose 五服务 / Nginx / Dockerfile / MySQL init / deploy·backup·restore）；`start-local` / `stop-local` / `backup` / `restore` / `check-docs` 脚本；`docs/13` 部署运维、`docs/14` 用户手册
   - 实测：`start-local` 16.4s（重跑 0.5s 幂等）、**冷启动 45.9s**、`stop-local -WithDb` 6.7s、备份 1.1s / 恢复 16.7s（db-validate 15/15、附件 137 全恢复）、`check-docs` **PASS=16 FAIL=0**、`verify.ps1 -SkipE2E -SkipShots` **PASS 248.8s**（170 tests、API 375 例）
   - env 化：`SERVER_PORT` / `DB_URL` / `DB_PASSWORD` / `JWT_SECRET` / `STORAGE_ROOT` / `CORS_ORIGINS` 等均可覆盖，默认=本机演示值
 - **M3 验收结论**：通过（`docs/12-M3-验收报告.md`）：E2E 23 passed / 1 skipped、截图 S01–S28、API 375 例、`verify.ps1` 317.5s PASS
@@ -20,8 +25,8 @@
   - MySQL 项目实例 `127.0.0.1:3307`（datadir `.runtime\mysql`，库 `icp_platform`，账号 `icp_app`），系统 MySQL80/3306 未动
   - 后端 `http://127.0.0.1:8080`（Spring Boot 3.3.4 / Java 21 / Flowable 7.1.0，ACT_* 39 张）；前端预览 `http://127.0.0.1:4173`、dev `http://127.0.0.1:5173`
   - 演示账号：`admin` / `icpadmin` / `auditor` / `exec` / `dept01`–`dept06` / `staff01`–`staff20`，密码 `Icp@2026`
-- **演示态**：60 实例（40 运行 / 20 完成）、待办 40、催办 20、制度 52、风险 40、缺陷 30、任务 80、`sys_menu 179` / `sys_role_menu 540` / `sys_config 16`
-- **未完成（后续可选）**：M5 软著材料（源码 60 页 / 手册 60 页 / 申请表，D11 暂缓）；Docker Compose 需在具备 Docker 的环境按 `deploy/README.md` 实测
-- **已知限制**：Redis/MinIO 以 Caffeine+本地存储替代；自定义数据权限（5）/多租户/K8s 二期；流程一级审批 + 发起节点需发起人确认（docs/10 §7.1）；矩阵唯一键与逻辑删除冲突（docs/08 §8）；文档可见性非 ADMIN 仅创建人/授权/借阅；SSE 与在线会话单实例内存；定时器不解析 cronExpression；审计哈希链属等保增强，一期不做
-- **阅读入口**：README → STATUS → DECISIONS → PLAN-MATRIX → 当前阶段 docs（交付：docs/13 部署运维、docs/14 用户手册、docs/16 交付验收）
-- **更新时间**：2026-11-04
+- **演示态**：60 实例（40 运行 / 20 完成）、待办 40、催办 20、制度 52、风险 40、缺陷 30、任务 80、会议纪要 20（12 已召开/5 待召开/3 已取消）、`sys_menu 184` / `sys_role_menu 558` / `sys_config 16` / `sys_dict_type 21` / `sys_dict_data 88`
+- **未完成（后续可选）**：Docker Compose 需在具备 Docker 的环境按 `deploy/README.md` 实测；导出扩面暂缓；合同管理不做
+- **已知限制**：Redis/MinIO 以 Caffeine+本地存储替代；自定义数据权限（5）/多租户/K8s 二期；流程为一级审批（采购为金额两级示例）；矩阵唯一键与逻辑删除冲突（docs/08 §8）；文档可见性非 ADMIN 仅创建人/授权/借阅；SSE 与在线会话单实例内存；定时器不解析 cronExpression；审计哈希链属等保增强，一期不做
+- **阅读入口**：README → STATUS → DECISIONS → PLAN-MATRIX → 当前阶段 docs（交付：docs/13 部署运维、docs/14 用户手册、docs/16 交付验收、docs/17 演示增强）
+- **更新时间**：2026-11-05

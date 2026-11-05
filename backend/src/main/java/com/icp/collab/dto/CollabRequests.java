@@ -141,4 +141,38 @@ public final class CollabRequests {
             String description,
             String remark) {
     }
+
+    public record MeetingCreate(
+            @NotBlank String title,
+            String meetingType,
+            @NotNull LocalDateTime startTime,
+            LocalDateTime endTime,
+            String location,
+            Long organizerId,
+            String organizerName,
+            Long deptId,
+            String deptName,
+            String attendeeNames,
+            Integer attendeeCount,
+            String minutes,
+            String remark) {
+    }
+
+    public record MeetingUpdate(
+            String title,
+            String meetingType,
+            LocalDateTime startTime,
+            LocalDateTime endTime,
+            String location,
+            Long organizerId,
+            String organizerName,
+            Long deptId,
+            String deptName,
+            String attendeeNames,
+            Integer attendeeCount,
+            String remark) {
+    }
+
+    public record MeetingMinutes(@NotBlank String minutes) {
+    }
 }

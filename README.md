@@ -176,18 +176,17 @@ icp-collab-platform/
 6. [docs/02-方案差距表与风险.md](docs/02-方案差距表与风险.md) —— 差距、假设、风险、已确认问题
 7. [docs/03-接口契约.md](docs/03-接口契约.md)、[docs/04-数据模型与种子.md](docs/04-数据模型与种子.md)、[docs/05-权限矩阵.md](docs/05-权限矩阵.md) —— 冻结契约
 8. 验收报告：[docs/06-M1](docs/06-M1-验收报告.md)、[docs/07-M2a](docs/07-M2a-验收报告.md)、[docs/08-M2b](docs/08-M2b-验收报告.md)、[docs/09-M2c](docs/09-M2c-验收报告.md)、[docs/10-M2d](docs/10-M2d-验收报告.md)、[docs/11-M2e](docs/11-M2e-验收报告.md)、[docs/12-M3](docs/12-M3-验收报告.md)、[docs/16-M4 交付验收](docs/16-M4-交付验收报告.md)
-9. 交付文档：[docs/13 部署与运维](docs/13-部署与运维手册.md)、[docs/14 用户手册](docs/14-用户手册.md)、[docs/17 演示增强计划](docs/17-软著MVP演示增强计划.md)
+9. 交付文档：[docs/13 部署与运维](docs/13-部署与运维手册.md)、[docs/14 用户手册](docs/14-用户手册.md)
 10. [docs/screenshots/INDEX.md](docs/screenshots/INDEX.md) —— 30 张最终截图索引
 
 ## 交付边界（一期）
 
 - **做**：组织权限、登录与审计、制度/风险/控制矩阵、内控评价、缺陷整改闭环、6 条内置审批流（采购按金额两级审批）、任务/文档/公告/消息/日程/会议纪要、看板与预警、图表下钻、数据大屏、部署文件与文档、Playwright E2E 与 30 张截图
 - **不做（二期）**：多租户实装、真实 Redis/MinIO/ES、OAuth2/LDAP、电子签名、K8s/Helm 实机、监控栈、独立移动端、低代码表单、在线流程设计器、在线文档预览、合同/采购/费用插件
-- 软著材料：2026-11-05 用户决定不再由本项目负责，M5 计划与 `docs/15` 已移除（DECISIONS D11 同步更新）
+- 交付范围：本项目只交付可运行 Demo + 项目文档，不含登记/备案类材料（2026-11-05 范围确认，见 `DECISIONS.md` D11）
 
 ## 约定
 
-- 私有《软著 Demo 手册》不进入本仓库、不上传远端；仓库内只放项目自身文档与代码。
 - 开发期验收脚本、调试日志与过程截图统一归档在 `icp-collab-platform\.runtime\artifacts\`（`.runtime/` 已 gitignore，不随仓库分发，也不在上级工作目录残留）；交付用截图只在 `docs/screenshots/`。
 - 阶段门禁、验收命令与汇报格式见 [docs/01-阶段计划与验收口径.md](docs/01-阶段计划与验收口径.md)。
 - 源码统一 UTF-8；本机为 Windows PowerShell 5.1（无 pwsh7），仓库内脚本保持 ASCII、避免 PS7 语法；中文文件用编辑器/工具写入（勿用 shell 重定向，避免 BOM/GBK 乱码）。

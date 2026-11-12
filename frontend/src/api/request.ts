@@ -51,7 +51,7 @@ const request = axios.create({
  * 判断「后端服务不可达」：
  * - 请求没有拿到任何响应（网络错误、代理无法连接）
  * - 开发环境 Vite 代理在后端未启动时会返回 500 + 空响应体
- * 超时不视为不可达，避免把后端繁忙误判为演示模式。
+ * 超时不视为不可达，避免把后端繁忙误判为服务不可用。
  */
 function isBackendUnavailable(error: AxiosError): boolean {
   if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') return false
@@ -142,7 +142,7 @@ request.interceptors.response.use(
     } else if (status === 404) {
       ElMessage.error('请求的接口不存在')
     } else if (unavailable) {
-      // 后端未启动/代理不可达：由调用方决定是否进入演示模式，这里不弹窗
+      // 后端未启动/代理不可达：由调用方决定是否提示，这里不弹窗
     } else if (status && status >= 500) {
       ElMessage.error('服务暂不可用，请稍后重试')
     } else if (error.code === 'ECONNABORTED') {

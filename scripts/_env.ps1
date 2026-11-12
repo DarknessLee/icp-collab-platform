@@ -13,7 +13,24 @@ $script:MyIni = Join-Path $RuntimeDir 'my.ini'
 $script:FilesDir = Join-Path $RuntimeDir 'files'
 
 $script:JavaHome = 'D:\DevTools\jdk-21.0.13'
-$script:MySQLHome = 'C:\Program Files\MySQL\MySQL Server 8.0'
+# Locate a local MySQL server (8.x preferred, 5.7 also supported).
+$script:MySQLHome = $null
+$mysqlCandidates = @(
+    'C:\Program Files\MySQL\MySQL Server 8.0',
+    'C:\Program Files\MySQL\MySQL Server 8.4',
+    'D:\DevTools\mysql-5.7.44'
+)
+foreach ($dir in $mysqlCandidates) {
+    if (Test-Path (Join-Path $dir 'bin\mysqld.exe')) { $script:MySQLHome = $dir; break }
+}
+if (-not $MysqlHome -and (Test-Path 'D:\DevTools')) {
+    $found = Get-ChildItem -Path 'D:\DevTools' -Directory -Filter 'mysql-*' -ErrorAction SilentlyContinue |
+        Sort-Object Name -Descending | Select-Object -First 1
+    if ($found) { $script:MySQLHome = $found.FullName }
+}
+if (-not $MySQLHome) {
+    throw "MySQL server not found (looked for C:\Program Files\MySQL\MySQL Server 8.0, 8.4 and D:\DevTools\mysql-*)."
+}
 $script:MySQLBin = Join-Path $MySQLHome 'bin'
 $script:MySQLPort = 3307
 $script:MySQLHost = '127.0.0.1'

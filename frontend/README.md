@@ -28,10 +28,10 @@ npm run preview
 | 文件 | 变量 | 说明 |
 | --- | --- | --- |
 | `.env.development` | `VITE_API_BASE=/api/v1` | 开发环境接口前缀（经 Vite 代理） |
-| | `VITE_ENABLE_MOCK=true` | 后端未启动时允许演示账号登录 |
+| | `VITE_ENABLE_MOCK=true` | 后端未启动时允许预置账号登录 |
 | | `VITE_ENABLE_CAPTCHA=false` | 验证码占位开关（默认关闭） |
 | `.env.production` | `VITE_API_BASE=/api/v1` | 生产环境接口前缀（由部署侧反向代理） |
-| | `VITE_ENABLE_MOCK=false` | 生产环境禁用演示模式 |
+| | `VITE_ENABLE_MOCK=false` | 生产环境禁用运行模式 |
 
 ## 后端联调账号（真实后端，MySQL 3307 + Spring Boot 8080）
 
@@ -44,8 +44,8 @@ npm run preview
 | 部门负责人 | dept01 | Icp@2026 | 后端角色 DEPT_MANAGER |
 | 普通员工 | staff01 | Icp@2026 | 后端角色 EMPLOYEE |
 
-后端启动后登录接口返回真实 `menus / permissions`，演示模式自动关闭（页面不再显示「演示模式」标识）。
-仅当**后端完全不可达**（网络错误或开发代理 500 空响应）且 `VITE_ENABLE_MOCK=true` 时，才回退到内置演示账号：
+后端启动后登录接口返回真实 `menus / permissions`，运行模式自动关闭（页面不再显示「运行模式」标识）。
+仅当**后端完全不可达**（网络错误或开发代理 500 空响应）且 `VITE_ENABLE_MOCK=true` 时，才回退到内置预置账号：
 
 | 角色 | 用户名 | 密码 |
 | --- | --- | --- |
@@ -62,7 +62,7 @@ src/
   config/       应用信息、内置菜单与模块说明（无后端菜单时的兜底）
   directives/   v-perm 按钮权限指令
   layout/       主框架：侧栏、顶栏、多标签页、内容区
-  mock/         演示账号、角色菜单/权限与兜底数据（仅演示模式使用）
+  mock/         预置账号、角色菜单/权限与兜底数据（仅运行模式使用）
   router/       路由表、静态系统管理路由、菜单动态注册与登录守卫
   stores/       Pinia：user（登录态/权限/菜单）、app（侧栏/标签页）
   styles/       全局样式
@@ -297,7 +297,7 @@ CSV 导出文件名（UTF-8 BOM 已验证，清单见 `shots\m2b\csv-filenames.t
 
 | 菜单 | 页面 | 主要能力 |
 | --- | --- | --- |
-| 工作台 | `views/dashboard/index.vue` | 8 指标卡（制度总/有效、风险总/高、覆盖率、缺陷/未关闭、整改率、待办、超期任务、未读消息）+ 快捷入口按权限过滤 + 近 6 月双轴趋势（新增制度/缺陷柱 + 流程均耗时线）+ 骨架/错误重试/刷新；数据来自 `/dashboard/summary`、`/dashboard/trend`，替换原静态演示数据 |
+| 工作台 | `views/dashboard/index.vue` | 8 指标卡（制度总/有效、风险总/高、覆盖率、缺陷/未关闭、整改率、待办、超期任务、未读消息）+ 快捷入口按权限过滤 + 近 6 月双轴趋势（新增制度/缺陷柱 + 流程均耗时线）+ 骨架/错误重试/刷新；数据来自 `/dashboard/summary`、`/dashboard/trend`，替换原静态示例数据 |
 | 内控概览 | `views/report/overview.vue` | 覆盖率大数字 + dashboard 进度 + 已覆盖/未覆盖；部门/分类覆盖表与分类堆叠柱；部门下拉（需 `system:dept:list`）+ 年度筛选 |
 | 制度与风险 | `views/report/policy.vue` | dim=level/category/dept 切换；风险总数/高/中/低 4 卡；环形图 + 明细（占比 1 位小数） |
 | 缺陷统计 | `views/report/defect.vue` | 严重程度/状态筛选；缺陷总数/整改总数/已通过/完成率卡；严重程度×状态堆叠柱 + 明细；按部门整改率表 + 月度趋势双轴图 |
@@ -326,5 +326,5 @@ CSV 导出文件名（UTF-8 BOM 已验证，清单见 `shots\m2b\csv-filenames.t
 
 - 已完成：登录页（真实后端联调通过）、主框架（侧栏/面包屑/用户下拉/多标签页/移动端抽屉）、登录守卫、按菜单动态注册占位路由、直接输入模块地址时补注册路由（避免刷新 404）、`v-perm` 按钮权限、工作台统计卡片与 2 张 ECharts 图、403/404。
 - 占位页：各业务模块页面为 M1 骨架占位，展示模块说明与 M2 规划能力，按钮点击仅提示「将在 M2 阶段接入」。
-- 仍为静态演示数据：工作台 4 个统计卡片、2 张图表、近期待办列表（M2 接入真实报表接口后替换）。
+- 仍为静态示例数据：工作台 4 个统计卡片、2 张图表、近期待办列表（M2 接入真实报表接口后替换）。
 - 动态路由 M1 采用「静态工作台 + 按菜单注册占位路由」，M2 可按需扩展为完整动态路由与真实页面组件。

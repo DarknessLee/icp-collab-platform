@@ -21,12 +21,18 @@ $basedir = $MySQLHome.Replace('\', '/')
 $datadir = $DataDir.Replace('\', '/')
 $logdir = $LogDir.Replace('\', '/')
 
+# mysqlx plugin exists in 8.x only; older servers reject the option.
+$serverVersion = (& (Join-Path $MySQLBin 'mysqld.exe') --version 2>&1 | Out-String)
+$isMysql8 = $serverVersion -match 'Ver 8\.'
+$mysqlxLine = ''
+if ($isMysql8) { $mysqlxLine = "mysqlx=0" }
+
 $ini = @"
 [mysqld]
 basedir="$basedir"
 datadir="$datadir"
 port=$MySQLPort
-mysqlx=0
+$mysqlxLine
 character-set-server=utf8mb4
 collation-server=utf8mb4_general_ci
 lower_case_table_names=1

@@ -85,9 +85,6 @@ async function handleCommand(command: string): Promise<void> {
     </div>
 
     <div class="navbar-right">
-      <el-tag v-if="userStore.mockMode" type="warning" effect="light" size="small">
-        演示模式
-      </el-tag>
       <el-tag v-if="!mobile" type="info" effect="plain" size="small">
         {{ userStore.primaryRole }}
       </el-tag>

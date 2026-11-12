@@ -6,7 +6,6 @@ const USER_KEY = 'icp_user'
 const ROLES_KEY = 'icp_roles'
 const PERMISSIONS_KEY = 'icp_permissions'
 const MENUS_KEY = 'icp_menus'
-const MOCK_MODE_KEY = 'icp_mock_mode'
 
 function readJson<T>(key: string, fallback: T): T {
   try {
@@ -25,7 +24,6 @@ export interface StoredAuth {
   roles: string[]
   permissions: string[]
   menus: MenuItem[]
-  mockMode: boolean
 }
 
 export function getToken(): string {
@@ -43,8 +41,7 @@ export function loadAuth(): StoredAuth {
     user: readJson<UserInfo | null>(USER_KEY, null),
     roles: readJson<string[]>(ROLES_KEY, []),
     permissions: readJson<string[]>(PERMISSIONS_KEY, []),
-    menus: readJson<MenuItem[]>(MENUS_KEY, []),
-    mockMode: localStorage.getItem(MOCK_MODE_KEY) === '1'
+    menus: readJson<MenuItem[]>(MENUS_KEY, [])
   }
 }
 
@@ -57,14 +54,13 @@ export interface AuthPayload {
   menus: MenuItem[]
 }
 
-export function saveAuth(payload: AuthPayload, mockMode: boolean): void {
+export function saveAuth(payload: AuthPayload): void {
   localStorage.setItem(ACCESS_TOKEN_KEY, payload.accessToken)
   localStorage.setItem(REFRESH_TOKEN_KEY, payload.refreshToken || '')
   localStorage.setItem(USER_KEY, JSON.stringify(payload.user))
   localStorage.setItem(ROLES_KEY, JSON.stringify(payload.roles || []))
   localStorage.setItem(PERMISSIONS_KEY, JSON.stringify(payload.permissions || []))
   localStorage.setItem(MENUS_KEY, JSON.stringify(payload.menus || []))
-  localStorage.setItem(MOCK_MODE_KEY, mockMode ? '1' : '0')
 }
 
 export function clearAuth(): void {
@@ -74,7 +70,6 @@ export function clearAuth(): void {
     USER_KEY,
     ROLES_KEY,
     PERMISSIONS_KEY,
-    MENUS_KEY,
-    MOCK_MODE_KEY
+    MENUS_KEY
   ].forEach((key) => localStorage.removeItem(key))
 }

@@ -37,7 +37,7 @@
 | 会议纪要：排期/参会人/纪要/状态 | 已实现（M6-W3）：`coll_meeting`（Flyway V4、20 条种子、`HY-2026-###` 编码、状态 0待召开/1已召开/2已取消）+ 列表/详情/新建/编辑/删除/写纪要 API 与页面；数据范围 + 审计 | MeetingServiceTest 7 项；mvn 177 tests；E18 会议纪要 PASS | docs/03 §6.2、docs/04、docs/05 §10、docs/14 §5.4 | 已实现 |
 | 数据大屏（运营驾驶舱） | 已实现（M6-W3）：`/screen` 全屏独立页，6 KPI + 6 面板（趋势/风险分布/缺陷分布/流程 TOP6/部门覆盖率/预警滚动），60s 刷新，工作台入口 | E19 大屏 PASS（6 KPI/6 panel/≥5 canvas/返回工作台） | docs/14 §5.5、docs/17 | 已实现 |
 | 采购按金额分级审批 | 已实现（M6-W2）：`purchase_apply` 增 `amountGateway`，≤5000 部门审批后结束，>5000 追加 ROLE_MANAGEMENT；`purchaseAmount` 由 formData.amount 注入 | E17 两用例 PASS；E10 回归 PASS | docs/03 §5、docs/14 §4.4、docs/17 | 已实现 |
-| 合同/采购/费用业务插件（合同/费用） | 未开始（二期；采购已有流程 Demo） | — | — | 暂缓 |
+| 合同/采购/费用业务插件（合同/费用） | 未开始（二期；采购已有流程示例） | — | — | 暂缓 |
 | K8s/Helm、Prometheus/Grafana/Loki、GitLab CI | 未开始（二期，目录 M4 预留） | — | docs/10 | 暂缓 |
 | 真实 Redis / MinIO / 消息队列 | 进程内 Caffeine + 本地存储替代，接口已留（D06/D07） | 缓存/存储类已实现 | docs/00、docs/10 | 暂缓 |
 | Docker Compose 一键部署 | 已交付 `deploy/` 11 文件（Compose 五服务 + Nginx + Dockerfile + MySQL init + deploy/backup/restore）；本机无 Docker 未实测（D04/Q1） | 静态检查；env 覆盖实测（18080 健康 + login code=0） | deploy/README、docs/13 §5 | 已实现（交付件未本机拉起） |
@@ -72,7 +72,7 @@
 | 流程中心 9 页（M2c） | 已完成（待办/已办/我发起/监控/实例/定义/采购/用印/借阅 + 详情抽屉 + bpmn 高亮） | 前端 69/55/28/21；verify-m2c 77/77 ×3 | docs/09 | 已实现 |
 | 协同运营 6 页（M2d） | 已完成（任务/文档/借阅/公告/消息 SSE/日程月历 + 权限抽屉） | verify-m2d 44/44；test-api-m2d 109/109；前端 mock 43/43 | docs/10 | 已实现 |
 | 各阶段验收报告 | M1–M4 报告全部完成（docs/06–12 + docs/16） | 各报告含实际命令与数字 | docs/06–12、docs/16 | 已实现 |
-| E2E 套件（Playwright）与验收脚本（M3/M6） | 已完成：`e2e/` E01–E19 + screenshots.spec（32 tests / 19 files）；`scripts/demo-reset/test-api/test-e2e/screenshots/build/verify` | test-e2e 31 passed / 1 skipped / 0 failed；verify 全链路 PASS | docs/12、docs/17、e2e/README | 已实现 |
+| E2E 套件（Playwright）与验收脚本（M3/M6） | 已完成：`e2e/` E01–E19 + screenshots.spec（32 tests / 19 files）；`scripts/reset-data/test-api/test-e2e/screenshots/build/verify` | test-e2e 31 passed / 1 skipped / 0 failed；verify 全链路 PASS | docs/12、docs/17、e2e/README | 已实现 |
 | 最终截图（≥25 张） | 已完成（M3+M6）：`docs/screenshots/` S01–S30（30 张 1440×900，s28 窄屏、s29 会议纪要、s30 数据大屏）+ INDEX.md，附种子数字 | `screenshots.ps1` 校验 PASS（30 PNG ≥ 25） | docs/screenshots、docs/12 §6 | 已实现 |
 | 部署运维手册 / 用户手册 | 已完成（M4）：docs/13（13 章）、docs/14（10 章） | 人工核对 + `check-docs` PASS=16 | docs/13、docs/14 | 已实现 |
 | 文档一致性门禁（check-docs） | 已完成：编号/H1/相对链接/名称版本/STATUS commit/30 截图/INDEX 全覆盖 | `check-docs.ps1` PASS=16 FAIL=0 | docs/16 §4、scripts/check-docs.ps1 | 已实现 |

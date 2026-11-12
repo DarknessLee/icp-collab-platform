@@ -1280,7 +1280,7 @@ public class WorkflowInstanceService {
         return LocalDateTime.now().isAfter(dueTime(link));
     }
 
-    /** 超时判断（可覆盖超时阈值，便于验收/演示不同阈值下的超时预警）。 */
+    /** 超时判断（可覆盖超时阈值，便于验收/示例不同阈值下的超时预警）。 */
     public boolean isOverdue(WfBusinessLink link, int timeoutHours) {
         if (link.getStatus() == null || link.getStatus() != WorkflowConstants.LINK_RUNNING || link.getStartTime() == null) {
             return false;

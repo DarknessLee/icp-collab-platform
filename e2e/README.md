@@ -1,13 +1,13 @@
 # E2E 套件（Playwright，M3 + M6）
 
-仓库根 `e2e/` 是端到端验收套件：实现 docs/01 §3.2 的 E01–E14 与 M6 增补的 E15–E19，并在演示态生成 S01–S30 最终截图。
+仓库根 `e2e/` 是端到端验收套件：实现 docs/01 §3.2 的 E01–E14 与 M6 增补的 E15–E19，并在初始数据态生成 S01–S30 最终截图。
 
 ## 环境要求
 
 - Node.js 18+，本仓库使用 Node 24。
-- 后端：`http://127.0.0.1:8080`（MySQL 3307）已启动、health UP，种子为演示态：
-  - `scripts/demo-reset.ps1` 生成：60 流程实例（40 running / 20 completed）、icpadmin 待办 40、催办 20；
-  - 制度 52（seed-flow 追加 12 条流程政策）、风险 40、缺陷 30、任务 80、会议纪要 20；菜单 184 / role_menu 558 / config 16；演示基准日 2026-10-31。
+- 后端：`http://127.0.0.1:8080`（MySQL 3307）已启动、health UP，种子为初始数据态：
+  - `scripts/reset-data.ps1` 生成：60 流程实例（40 running / 20 completed）、icpadmin 待办 40、催办 20；
+  - 制度 52（seed-flow 追加 12 条流程政策）、风险 40、缺陷 30、任务 80、会议纪要 20；菜单 184 / role_menu 558 / config 16；数据基准日 2026-10-31。
 - 前端：`frontend/` 先 `npm run build`，再 `npm run preview -- --port 4173 --strictPort`（默认 baseURL 4173）。
 - 可选覆盖：`E2E_BASE_URL`（如 http://127.0.0.1:5173）、`E2E_API_BASE`、`E2E_EVIDENCE_FILE`。
 - 账号：`admin` / `icpadmin` / `auditor` / `exec` / `dept01` / `staff01`，统一密码 `Icp@2026`。
@@ -27,7 +27,7 @@ npx playwright install chromium
 cd e2e
 npm run e2e          # 跑全部 32 条用例（19 个 spec 文件）
 npm run e2e:list     # 列出用例
-npm run e2e:shots    # E2E_DEMO=1，生成 S01–S30 到 ../docs/screenshots/ 并写 INDEX.md
+npm run e2e:shots    # E2E_SHOTS=1，生成 S01–S30 到 ../docs/screenshots/ 并写 INDEX.md
 ```
 
 也可单独挑选 spec，例如只读回归：
@@ -44,37 +44,38 @@ npx playwright test tests/e01-login.spec.ts tests/e02-dashboard.spec.ts tests/e0
 | 只读 | E01 登录、E02 工作台、E03 菜单、E04 数据权限、E12 流程中心、E14 审计 | 否 | 只登录、查询、校验页面数字与 API 同源，可反复跑 |
 | 写库 | E05 制度、E06 风险/矩阵、E07 控制点、E08 评价、E09 缺陷/整改、E10 采购、E11 驳回重提、E13 协同、E16 抄送、E17 金额分级、E18 会议纪要 | 是 | 用唯一后缀创建数据并尽力清理；已发布文档/公告、已关闭计划/缺陷、流程实例/借阅等无法删除，会残留 |
 | 只读（M6） | E15 图表下钻、E19 数据大屏 | 否 | 只跳转/查询，可反复跑 |
-| 截图 | `tests/screenshots.spec.ts`（`npm run e2e:shots`） | 否 | 仅在 `E2E_DEMO=1` 时运行，需纯净演示态 |
+| 截图 | `tests/screenshots.spec.ts`（`npm run e2e:shots`） | 否 | 仅在 `E2E_SHOTS=1` 时运行，需纯净初始数据态 |
 
 推荐顺序（避免截图被测试数据污染）：
 
-1. 后端 `scripts/demo-reset.ps1` → 演示态 60/40/20；
+1. 后端 `scripts/reset-data.ps1` → 初始数据态 60/40/20；
 2. 只读回归（上表第一行）确认数字；
 3. 写库用例按 E05 → E06 → E07 → E08 → E09 → E10 → E11 → E13 → E16 → E17 → E18 顺序跑；
-4. 再执行一次 `scripts/demo-reset.ps1` 回到纯净演示态；
+4. 再执行一次 `scripts/reset-data.ps1` 回到纯净初始数据态；
 5. `npm run e2e:shots` 生成最终截图与 `docs/screenshots/INDEX.md`。
 
-截图要求：1440×900（S28 为 390×844 窄屏）、`sNN-<slug>.png`、30 张（S01–S30）；INDEX.md 含文件名/说明/页面路径/角色/种子数字，并注明「演示态 60 实例/40 待办/20 催办、基准日 2026-10-31、制度 52/风险 40/缺陷 30」。
+截图要求：1440×900（S28 为 390×844 窄屏）、`sNN-<slug>.png`、30 张（S01–S30）；INDEX.md 含文件名/说明/页面路径/角色/种子数字，并注明「初始数据态 60 实例/40 待办/20 催办、基准日 2026-10-31、制度 52/风险 40/缺陷 30」。
 
 ## 目录结构
 
 ```
 e2e/
 ├─ playwright.config.ts     # baseURL 默认 4173；workers=1、retries=0、失败 trace+截图
-├─ run-shots.mjs            # npm run e2e:shots 的入口（注入 E2E_DEMO=1）
+├─ run-shots.mjs            # npm run e2e:shots 的入口（注入 E2E_SHOTS=1）
 ├─ fixtures/
 │  ├─ evidence.pdf          # E09/E13 上传证据的默认文件（可 E2E_EVIDENCE_FILE 覆盖）
 │  └─ make-evidence-pdf.mjs # 重新生成最小合法 PDF
 └─ tests/
    ├─ helpers.ts            # 登录/API 调用/等待/截图/权限辅助
    ├─ e01-login.spec.ts     … e14-audit.spec.ts   # E01–E14
-   └─ screenshots.spec.ts   # S01–S28 最终截图
+   ├─ e15…e18 spec            # E15–E19（M6 增补）
+   └─ screenshots.spec.ts   # S01–S30 最终截图
 ```
 
 ## 说明与约定
 
 - 数字断言以 API 直调（如 `/dashboard/summary`、`/workflow/monitor`、分页 total）为准，不写死种子数字。
-- 写库用例使用时间戳唯一后缀，标记 `E2E…`；清理失败会在 stdout 打印 `[E13] 残留 …` 等提示，属预期（后续 demo-reset 清除）。
+- 写库用例使用时间戳唯一后缀，标记 `E2E…`；清理失败会在 stdout 打印 `[E13] 残留 …` 等提示，属预期（后续 reset-data 清除）。
 - 失败产物在 `e2e/test-results/`（已 gitignore）；需要重放可 `npx playwright show-trace <trace.zip>`。
 - 截图前统一复位窗口/表格横向滚动，避免打开抽屉或点击链接后左侧列被裁切。
 - 侧栏会过滤种子中 `visible=0` 的隐藏菜单（表单管理 /wf/form、催办管理 /wf/urge），E03 含对应断言。

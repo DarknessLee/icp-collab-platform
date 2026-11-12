@@ -81,7 +81,7 @@ test.describe('E12 流程中心', () => {
       await expect(drawer.locator('button:has-text("驳回")')).toHaveCount(0);
       await drawer.locator('.el-drawer__close-btn').click().catch(() => page.keyboard.press('Escape'));
     } else {
-      test.info().annotations.push({ type: 'skip-note', description: 'clean seed 下 admin 无待办，审批按钮只读校验留待演示态' });
+      test.info().annotations.push({ type: 'skip-note', description: 'clean seed 下 admin 无待办，审批按钮只读校验留待初始数据态' });
     }
 
     expectNoIssues(issues, 'E12');
@@ -100,7 +100,7 @@ test.describe('E12 流程中心', () => {
     if (monitor.total === 0) {
       test.info().annotations.push({
         type: 'skip-note',
-        description: 'clean seed 下无流程实例；演示态（seed-flow）后再验 BPMN 高亮',
+        description: 'clean seed 下无流程实例；初始数据态（seed-flow）后再验 BPMN 高亮',
       });
       await expect(page.locator('.el-table__empty-text')).toBeVisible();
       expectNoIssues(issues, 'E12-instance');

@@ -52,7 +52,7 @@ function Login([string]$user) {
 function Headers($login) { return @{ Authorization = 'Bearer ' + $login.accessToken } }
 
 # Decode UTF-16BE hex into a Unicode string so this script stays pure ASCII while
-# still producing professional Chinese business titles in the demo data.
+# still producing professional Chinese business titles in the seed data.
 function Cn([string]$hex) {
     $sb = New-Object System.Text.StringBuilder
     for ($i = 0; $i -lt $hex.Length; $i += 4) {

@@ -1,7 +1,5 @@
 import { defineStore } from 'pinia'
 import { loginApi, logoutApi } from '@/api/auth'
-import { MOCK_ENABLED } from '@/config/app'
-import { mockLogin } from '@/mock/auth'
 import { getFallbackMenus } from '@/mock/menus'
 import type { LoginPayload, LoginResult, MenuItem, UserInfo } from '@/types'
 import { clearAuth, loadAuth, saveAuth } from '@/utils/auth'
@@ -16,14 +14,6 @@ interface UserState {
   roles: string[]
   permissions: string[]
   menus: MenuItem[]
-  mockMode: boolean
-}
-
-function isNetworkError(error: unknown): boolean {
-  // 仅 axios 拦截器标记的「后端不可达」（网络错误、开发代理 500 空响应）才启用演示模式；
-  // 后端业务错误（如 40101 用户名或密码错误）必须原样抛出。
-  const err = error as { backendUnavailable?: boolean } | null
-  return Boolean(err && err.backendUnavailable === true)
 }
 
 function menuSignature(menus: MenuItem[]): string {
@@ -52,8 +42,7 @@ export const useUserStore = defineStore('user', {
       user: stored.user,
       roles: stored.roles,
       permissions: stored.permissions,
-      menus: stored.menus,
-      mockMode: stored.mockMode
+      menus: stored.menus
     }
   },
 
@@ -67,21 +56,7 @@ export const useUserStore = defineStore('user', {
 
   actions: {
     async login(payload: LoginPayload): Promise<void> {
-      let result: LoginResult
-      let mockMode = false
-
-      try {
-        result = await loginApi(payload)
-      } catch (error) {
-        // 仅「网络不可达」时启用演示模式；后端返回的业务错误照常抛给页面
-        if (!MOCK_ENABLED || !isNetworkError(error)) throw error
-        const mockResult = mockLogin(payload)
-        if (!mockResult) {
-          throw new Error('后端服务未启动；演示账号或密码不正确（见登录页下方提示）')
-        }
-        result = mockResult
-        mockMode = true
-      }
+      const result: LoginResult = await loginApi(payload)
 
       if (!result || !result.accessToken) {
         throw new Error('登录响应缺少访问令牌')
@@ -92,7 +67,6 @@ export const useUserStore = defineStore('user', {
       this.user = result.user || null
       this.roles = Array.isArray(result.roles) ? result.roles : []
       this.permissions = Array.isArray(result.permissions) ? result.permissions : []
-      this.mockMode = mockMode
 
       const backendMenus = Array.isArray(result.menus) ? result.menus : []
       // 菜单为空时按角色使用内置兜底菜单，避免登录后白屏
@@ -106,8 +80,7 @@ export const useUserStore = defineStore('user', {
           roles: this.roles,
           permissions: this.permissions,
           menus: this.menus
-        },
-        mockMode
+        }
       )
     },
 
@@ -135,18 +108,15 @@ export const useUserStore = defineStore('user', {
           roles: this.roles,
           permissions: this.permissions,
           menus: this.menus
-        },
-        this.mockMode
+        }
       )
     },
 
     async logout(): Promise<void> {
-      if (!this.mockMode) {
-        try {
-          await logoutApi()
-        } catch {
-          // 后端退出接口失败不阻塞前端退出
-        }
+      try {
+        await logoutApi()
+      } catch {
+        // 后端退出接口失败不阻塞前端退出
       }
       this.reset()
     },
@@ -158,7 +128,6 @@ export const useUserStore = defineStore('user', {
       this.roles = []
       this.permissions = []
       this.menus = []
-      this.mockMode = false
       clearAuth()
     }
   }

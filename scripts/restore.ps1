@@ -103,8 +103,8 @@ if (Test-Path $backupFilesDir) {
 # 5. validate + start backend
 Write-Step 'restore: db-validate'
 $validate = Join-Path $PSScriptRoot 'db-validate.ps1'
-# Capture the child output so a demo/operational dataset can be recognised:
-# V15 pins the exact clean-seed row counts, so an otherwise valid demo backup
+# Capture the child output so a operational dataset can be recognised:
+# V15 pins the exact clean-seed row counts, so an otherwise valid seed backup
 # (seed-flow adds policies/purchases/...) fails only V15 by design.
 $validateOut = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $validate 2>&1
 $validateCode = $LASTEXITCODE
@@ -113,7 +113,7 @@ if ($validateCode -ne 0) {
     $failedChecks = @($validateOut | Where-Object { ([string]$_).Trim() -match '^V\d{2}\s+.*FAIL' })
     $v15Only = ($failedChecks.Count -eq 1) -and (([string]$failedChecks[0]) -match '^V15\s')
     if ($v15Only) {
-        Write-Step 'restore: NOTE - V15 (exact seed row counts) is expected to fail for a demo/operational backup; integrity checks V01-V14 passed'
+        Write-Step 'restore: NOTE - V15 (exact seed row counts) is expected to fail for a operational backup; integrity checks V01-V14 passed'
     } else {
         Write-Host 'ERROR: db-validate failed after restore'
         exit 1

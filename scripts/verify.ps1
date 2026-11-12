@@ -2,9 +2,9 @@
 # verify.ps1 - one-command full verification chain (ASCII, PS 5.1).
 #
 #   build.ps1            backend mvn clean verify + frontend npm run build
-#   demo-reset.ps1       clean DB + backend + seed-flow (demo state)
+#   reset-data.ps1       clean DB + backend + seed-flow (initial data state)
 #   test-api.ps1 -Reset  db-validate + M2a/M2b/M2d/M2c, then clean reset + M2e
-#   demo-reset.ps1       (again) demo state for the E2E run
+#   reset-data.ps1       (again) initial data state for the E2E run
 #   test-e2e.ps1         Playwright suite (skipped when e2e\ is missing)
 #   screenshots.ps1      validate docs\screenshots >= 25 PNG (with -WithShots)
 #   check-docs.ps1       docs/docs numbering/link/name/version/screenshot gate
@@ -82,9 +82,9 @@ if ($SkipBuild) {
     if (-not $ok) { $failed = $true }
 }
 
-# ------------------------------ 2. demo state ------------------------------
+# ------------------------------ 2. initial data state ------------------------------
 if (-not $failed) {
-    $ok = Invoke-Step 'demo-reset (clean seed + seed-flow demo state)' 'demo-reset.ps1' @() 'Check MySQL 3307 and .runtime/logs/backend.log; retry demo-reset.ps1.'
+    $ok = Invoke-Step 'reset-data (clean seed + seed-flow initial data state)' 'reset-data.ps1' @() 'Check MySQL 3307 and .runtime/logs/backend.log; retry reset-data.ps1.'
     if (-not $ok) { $failed = $true }
 }
 
@@ -106,7 +106,7 @@ if (-not $failed) {
         Write-Step 'verify: E2E SKIPPED (e2e\package.json not delivered yet - task-14)'
         $script:steps += [pscustomobject]@{ Step = 'test-e2e'; Exit = 0; Seconds = 0; Skipped = $true }
     } else {
-        $ok = Invoke-Step 'demo-reset (again, for E2E demo data)' 'demo-reset.ps1' @() 'Retry demo-reset.ps1, then inspect the E2E console output.'
+        $ok = Invoke-Step 'reset-data (again, for E2E seed data)' 'reset-data.ps1' @() 'Retry reset-data.ps1, then inspect the E2E console output.'
         if (-not $ok) { $failed = $true }
     }
 }
@@ -119,7 +119,7 @@ if (-not $failed -and $e2eReady -and -not $SkipE2e) {
 }
 
 if (-not $failed -and $WithShots -and $e2eReady -and -not $SkipShots) {
-    $ok = Invoke-Step 'screenshots (docs\screenshots >= 25 PNG)' 'screenshots.ps1' @() 'Re-run with -Take in demo state; inspect docs\screenshots.'
+    $ok = Invoke-Step 'screenshots (docs\screenshots >= 25 PNG)' 'screenshots.ps1' @() 'Re-run with -Take in initial data state; inspect docs\screenshots.'
     if (-not $ok) { $failed = $true }
 } elseif ($SkipShots) {
     Write-Step 'verify: screenshots validation SKIPPED (-SkipShots)'

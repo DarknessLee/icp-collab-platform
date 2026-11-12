@@ -6,13 +6,7 @@ import { CircleCheck, Lock, User } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { useAppStore } from '@/stores/app'
 import { registerMenuRoutes, resetMenuRoutes } from '@/router'
-import {
-  APP_DEMO_LABEL,
-  APP_NAME,
-  APP_VERSION,
-  CAPTCHA_ENABLED
-} from '@/config/app'
-import { DEMO_ACCOUNT_HINTS } from '@/mock/auth'
+import { APP_NAME, APP_VERSION, CAPTCHA_ENABLED } from '@/config/app'
 
 const router = useRouter()
 const route = useRoute()
@@ -64,8 +58,8 @@ async function handleLogin(): Promise<void> {
     await router.replace(target)
   } catch (error) {
     const message = (error as Error)?.message || ''
-    // 业务错误已由 axios 拦截器提示；这里仅补充演示模式相关提示
-    if (message.indexOf('后端服务未启动') >= 0 || message.indexOf('登录响应') >= 0) {
+    // 业务错误已由 axios 拦截器提示；网络异常与响应异常在这里补充提示
+    if (message.indexOf('登录响应') >= 0 || message.indexOf('网络') >= 0) {
       ElMessage.error(message)
     }
   } finally {
@@ -73,10 +67,6 @@ async function handleLogin(): Promise<void> {
   }
 }
 
-function fillAccount(username: string, password: string): void {
-  form.username = username
-  form.password = password
-}
 </script>
 
 <template>
@@ -102,7 +92,7 @@ function fillAccount(username: string, password: string): void {
           </li>
         </ul>
 
-        <div class="brand-foot">{{ APP_VERSION }} · {{ APP_DEMO_LABEL }}</div>
+        <div class="brand-foot">{{ APP_VERSION }}</div>
       </div>
     </section>
 
@@ -159,24 +149,8 @@ function fillAccount(username: string, password: string): void {
           </el-button>
         </el-form>
 
-        <div class="demo-tip">
-          <div class="demo-tip-title">
-            后端未连接时，可点击下方演示账号体验（{{ APP_DEMO_LABEL }}）
-          </div>
-          <div class="demo-tip-accounts">
-            <span
-              v-for="account in DEMO_ACCOUNT_HINTS"
-              :key="account.username"
-              class="demo-account"
-              @click="fillAccount(account.username, account.password)"
-            >
-              {{ account.role }}：{{ account.username }} / {{ account.password }}
-            </span>
-          </div>
-        </div>
-
         <div class="login-foot">
-          © {{ currentYear }} {{ APP_NAME }} · 内部演示系统，请勿用于生产数据
+          © {{ currentYear }} {{ APP_NAME }} 版权所有
         </div>
       </div>
     </section>
@@ -332,36 +306,6 @@ function fillAccount(username: string, password: string): void {
   background-color: #f2f4f7;
   border: 1px dashed #c5ccd6;
   border-radius: 4px;
-}
-
-.demo-tip {
-  padding: 12px;
-  margin-top: 20px;
-  background-color: #f7f9fc;
-  border: 1px dashed #d7deea;
-  border-radius: 8px;
-}
-
-.demo-tip-title {
-  margin-bottom: 6px;
-  font-size: 12px;
-  color: #5d7599;
-}
-
-.demo-tip-accounts {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.demo-account {
-  font-size: 12px;
-  color: #2f6fed;
-  cursor: pointer;
-}
-
-.demo-account:hover {
-  text-decoration: underline;
 }
 
 .login-foot {

@@ -2,8 +2,8 @@
 
 > 覆盖「制度 → 风险 → 控制矩阵 → 内控评价 → 缺陷整改」闭环，融合审批流、协同任务、文档与运营看板的企业内控一体化平台。
 
-- **当前阶段**：**M6 演示增强已完成并推送**；M0–M4 交付闭环，M6 三轮增强（W1 文档预览/报表下钻/脱敏/抄送、W2 采购金额分级、W3 会议纪要/数据大屏）均已验收，当前为可交付演示版本（详见 [STATUS.md](STATUS.md)）
-- **版本**：V1.0（未发表）
+- **当前阶段**：**M6 能力增强已完成并推送**；M0–M4 交付闭环，M6 三轮增强（W1 文档预览/报表下钻/脱敏/抄送、W2 采购金额分级、W3 会议纪要/数据大屏）均已验收，当前为可交付当前版本本（详见 [STATUS.md](STATUS.md)）
+- **版本**：V1.0
 - **产品形态**：B/S Web，前后端分离，浏览器访问（PC 优先，响应式兼容移动浏览器）
 
 ## 技术栈
@@ -12,7 +12,7 @@
   ---   ---  
   前端   Vue 3.5.44 + TypeScript 5.7 + Vite 6.4.5 + Element Plus 2.14.7 + Pinia 2.3 + Vue Router 4.6 + axios 1.21 + ECharts 5.6；bpmn-js 17.11.1 只读流程图  
   后端   Java 21 LTS（Corretto 21.0.13）+ Spring Boot 3.3.4 + Spring Security + JWT（jjwt）+ MyBatis-Plus + Flyway；Flowable 7.1.0（6 条内置 BPMN）  
-  数据库   MySQL 8.0.46（项目内独立实例 `127.0.0.1:3307`，库 `icp_platform`）+ Flyway V1–V4（43 张业务表 + ACT_* 39 张）  
+  数据库   MySQL 8.0（项目内独立实例 `127.0.0.1:3307`，库 `icp_platform`；本地脚本兼容 MySQL 5.7+）+ Flyway V1–V4（43 张业务表 + ACT_* 39 张）  
   存储/缓存   本地磁盘附件（`FileStorage` 接口，预留 S3/MinIO）／进程内 Caffeine（`CacheService` 接口，预留 Redis）  
   测试   JUnit 5 + Spring Boot Test（177 tests）；Playwright E2E（`e2e/`，E01–E19 + 截图 spec，31 项）；API 验收脚本 5 套（375 例）  
   部署   Docker Compose 文件（M4 交付，本机无 Docker 不实测）+ 本地 PowerShell 脚本（一键启动/重置/备份）  
@@ -24,11 +24,11 @@
 - **流程中心**：Flowable 7 内嵌 + 6 条流程（制度发布、缺陷整改、评价计划、文档借阅、采购申请、用印申请）；待办/已办/我发起、同意/驳回/重提/催办、流程监控与超时、只读 BPMN 高亮、审批历史留痕。
 - **协同运营**：任务中心（子任务/评论/提醒）、文档中心（目录/权限/版本/下载/在线预览）、文档借阅、公告（范围/已读）、站内信（SSE 实时）、日程月历、会议纪要（20 条种子，待召开/已召开/已取消）。
 - **报表与预警**：工作台 8 卡 + 趋势、内控概览/制度/缺陷/任务/预警 5 个报表页、4 类预警与 5 个定时扫描任务、图表点击下钻列表、数据大屏（`/screen` 全屏驾驶舱，60s 刷新）。
-- **演示态**：60 个流程实例（40 待办 / 20 已完成 / 20 催办）、52 条制度、40 条风险、30 条缺陷、80 条协同任务、20 条会议纪要；截图见 [`docs/screenshots/`](docs/screenshots/)。
+- **初始数据态**：60 个流程实例（40 待办 / 20 已完成 / 20 催办）、52 条制度、40 条风险、30 条缺陷、80 条协同任务、20 条会议纪要；截图见 [`docs/screenshots/`](docs/screenshots/)。
 
 ## 界面预览
 
-> 截图取自演示态（`scripts/demo-reset.ps1` 之后：60 实例 / 40 待办 / 20 催办，制度 52 / 风险 40 / 缺陷 30，会议纪要 20），前端为 4173 预览构建，登录账号 `admin`。完整 30 张与逐张说明见 [`docs/screenshots/INDEX.md`](docs/screenshots/INDEX.md)，重新采集用 `scripts\screenshots.ps1 -Take`。
+> 截图取自初始数据态（`scripts/reset-data.ps1` 之后：60 实例 / 40 待办 / 20 催办，制度 52 / 风险 40 / 缺陷 30，会议纪要 20），前端为 4173 预览构建，登录账号 `admin`。完整 30 张与逐张说明见 [`docs/screenshots/INDEX.md`](docs/screenshots/INDEX.md)，重新采集用 `scripts\screenshots.ps1 -Take`。
 
 ### 登录与工作台
 
@@ -120,15 +120,15 @@
 
 ## 快速开始（本机已验证）
 
-前置：JDK 21（`D:\DevTools\jdk-21.0.13`）、Maven 3.9.9（`D:\DevTools\apache-maven-3.9.9`）、Node 24、本机 MySQL 8 安装（仅用其 mysqld 二进制，不启动 3306 服务）。
+前置：JDK 21（`D:\DevTools\jdk-21.0.13`）、Maven 3.9.9（`D:\DevTools\apache-maven-3.9.9`）、Node 24、本机 MySQL 8 安装（仅用其 mysqld 二进制，不启动 3306 服务；若本机只有 MySQL 5.7，脚本会自动选用）。
 
 ```powershell
 cd D:\MyCodes\icp-collab-platform
 powershell -ExecutionPolicy Bypass -File scripts\start-local.ps1       # 一键：MySQL 3307 + 后端 8080 + 前端预览 4173（冷启动约 46s，重跑幂等）
-powershell -ExecutionPolicy Bypass -File scripts\demo-reset.ps1        # 可选：重置到演示态（60/40/20，约 40–45s）
+powershell -ExecutionPolicy Bypass -File scripts\reset-data.ps1        # 可选：重置到初始数据态（60/40/20，约 40–45s）
 ```
 
-- 访问 `http://127.0.0.1:4173`（一键启动即打开预览；开发模式用 `scripts\dev-frontend.ps1` → 5173），演示账号：`admin`（系统管理员）、`icpadmin`（内控管理员）、`auditor`（审计员）、`exec`（管理层）、`dept01`–`dept06`（部门负责人）、`staff01`–`staff20`（普通员工），密码统一 `Icp@2026`。
+- 访问 `http://127.0.0.1:4173`（一键启动即打开预览；开发模式用 `scripts\dev-frontend.ps1` → 5173），预置账号：`admin`（系统管理员）、`icpadmin`（内控管理员）、`auditor`（审计员）、`exec`（管理层）、`dept01`–`dept06`（部门负责人）、`staff01`–`staff20`（普通员工），密码统一 `Icp@2026`。
 - 后端健康检查：`http://127.0.0.1:8080/actuator/health`；Swagger：`/swagger-ui/index.html`。
 - 停止：`scripts\stop-local.ps1`（加 `-WithDb` 连 MySQL 一起停）。
 - 备份/恢复：`scripts\backup.ps1` → `scripts\restore.ps1 -Path <备份目录>`（实测 1.1s / 16.7s，附件与数据完整回滚）。
@@ -145,7 +145,7 @@ powershell -ExecutionPolicy Bypass -File scripts\check-docs.ps1   # 文档一致
 powershell -ExecutionPolicy Bypass -File scripts\verify.ps1       # 一键全链路（约 248–318s，PASS）
 ```
 
-> 运行顺序约束：`m2a/m2b` 必须在 `db-reset` 后、`seed-flow` 之前（m2b 有精确计数断言）；`m2e` 需单独 clean seed；E2E 与截图必须在 `demo-reset` 之后。
+> 运行顺序约束：`m2a/m2b` 必须在 `db-reset` 后、`seed-flow` 之前（m2b 有精确计数断言）；`m2e` 需单独 clean seed；E2E 与截图必须在 `reset-data` 之后。
 
 ## 目录结构
 
@@ -155,10 +155,10 @@ icp-collab-platform/
 │  └─ src/main/resources/   # db/migration（V1 schema / V2 seed_base / V3 seed_business / V4 coll_meeting，43 张业务表）+ processes/（6 条 BPMN）
 ├─ frontend/                # Vue3 + Vite：登录、主框架、工作台、系统管理 9 页、内控 7 页、流程中心 9 页、协同 6 页、报表 5 页
 ├─ e2e/                     # Playwright：E01–E19 用例 + 31 项 + screenshots.spec.ts（S01–S30）+ fixtures
-├─ scripts/                 # start-local/stop-local、backup/restore、demo-reset、build、test-api(-m2a…m2e)、test-e2e、
+├─ scripts/                 # start-local/stop-local、backup/restore、reset-data、build、test-api(-m2a…m2e)、test-e2e、
 │                           # screenshots、seed-flow、check-docs、verify
 ├─ docs/                    # 00 画像、01 阶段计划、02 差距风险、03 契约、04 数据模型与种子、05 权限矩阵、06–14 验收报告、
-│                           # 13 部署运维、14 用户手册、16 交付验收、17 演示增强、18 使用说明（docx）、screenshots/
+│                           # 13 部署运维、14 用户手册、16 交付验收、17 能力增强、18 使用说明（docx）、screenshots/
 ├─ .runtime/                # 本地 MySQL 数据、附件、日志（gitignore）
 ├─ deploy/                  # Docker Compose、Nginx、初始化与备份脚本（M4 交付）
 ├─ STATUS.md / DECISIONS.md / PLAN-MATRIX.md
@@ -183,7 +183,7 @@ icp-collab-platform/
 
 - **做**：组织权限、登录与审计、制度/风险/控制矩阵、内控评价、缺陷整改闭环、6 条内置审批流（采购按金额两级审批）、任务/文档/公告/消息/日程/会议纪要、看板与预警、图表下钻、数据大屏、部署文件与文档、Playwright E2E 与 30 张截图
 - **不做（二期）**：多租户实装、真实 Redis/MinIO/ES、OAuth2/LDAP、电子签名、K8s/Helm 实机、监控栈、独立移动端、低代码表单、在线流程设计器、合同/采购/费用插件
-- 交付范围：本项目只交付可运行 Demo + 项目文档 + 截图（2026-11-05 范围确认，见 `DECISIONS.md` D11）
+- 交付范围：本项目只交付可运行系统 + 项目文档 + 截图（2026-11-05 范围确认，见 `DECISIONS.md` D11）
 
 ## 约定
 

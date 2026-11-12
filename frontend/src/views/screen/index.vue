@@ -294,7 +294,7 @@ function defectOption(data: DefectStatReport): EChartsOption {
   }
 }
 
-/** 演示/种子数据中流程办结耗时可能全部为 0：此时退化为展示办结量，避免空白图表 */
+/** 初始数据中流程办结耗时可能全部为 0：此时退化为展示办结量，避免空白图表 */
 const processFallback = computed(() => {
   const items = processDuration.value?.items ?? []
   return items.length > 0 && items.every((item) => !(item.avgHours > 0))

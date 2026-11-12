@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------
-# demo-reset.ps1 - rebuild the demo state in one shot (ASCII only, PS 5.1).
+# reset-data.ps1 - rebuild the initial data state in one shot (ASCII only, PS 5.1).
 #
 #   stop backend -> db-reset (Flyway + seed + db-validate) -> start backend
 #   -> wait for health UP -> seed-flow.ps1 (60 flow instances / 40 todos / 20 urges)
@@ -7,8 +7,8 @@
 # Idempotent: running it again simply rebuilds the same state.
 #
 # Usage:
-#   powershell -NoProfile -ExecutionPolicy Bypass -File scripts\demo-reset.ps1
-#   ... -SkipFlowSeed   rebuild the clean seed only (no workflow demo data)
+#   powershell -NoProfile -ExecutionPolicy Bypass -File scripts\reset-data.ps1
+#   ... -SkipFlowSeed   rebuild the clean seed only (no workflow seed data)
 # ---------------------------------------------------------------------------
 param(
     [switch]$SkipFlowSeed
@@ -68,25 +68,25 @@ function Get-Token([string]$user) {
 }
 
 $startAll = Get-Date
-Write-Step 'demo-reset: step 1/5 stop backend'
+Write-Step 'reset-data: step 1/5 stop backend'
 $code = Invoke-Child 'stop-backend.ps1'
 if ($code -ne 0) { Write-Step 'stop-backend returned non-zero (backend was probably not running) - continue' }
 
-Write-Step 'demo-reset: step 2/5 db-reset (Flyway + seed)'
+Write-Step 'reset-data: step 2/5 db-reset (Flyway + seed)'
 $code = Invoke-Child 'db-reset.ps1'
 if ($code -ne 0) {
     Write-Host 'ERROR: db-reset failed. Check MySQL 3307 and .runtime/logs/.'
     exit 1
 }
 
-Write-Step 'demo-reset: step 3/5 db-validate'
+Write-Step 'reset-data: step 3/5 db-validate'
 $code = Invoke-Child 'db-validate.ps1'
 if ($code -ne 0) {
     Write-Host 'ERROR: db-validate failed after db-reset (seed is inconsistent).'
     exit 1
 }
 
-Write-Step 'demo-reset: step 4/5 start backend'
+Write-Step 'reset-data: step 4/5 start backend'
 $code = Invoke-Child 'start-backend.ps1' @('-SkipDbStart')
 if ($code -ne 0) { Write-Host 'ERROR: backend failed to start. Check .runtime/logs/backend.log.'; exit 1 }
 if (-not (Wait-Health 180)) {
@@ -97,9 +97,9 @@ Write-Step ('backend health UP (pid=' + (Get-Content (Join-Path $RuntimeDir 'bac
 
 $flowSummary = ''
 if ($SkipFlowSeed) {
-    Write-Step 'demo-reset: step 5/5 seed-flow SKIPPED (-SkipFlowSeed)'
+    Write-Step 'reset-data: step 5/5 seed-flow SKIPPED (-SkipFlowSeed)'
 } else {
-    Write-Step 'demo-reset: step 5/5 seed-flow (60 instances / 40 todo / 20 urges)'
+    Write-Step 'reset-data: step 5/5 seed-flow (60 instances / 40 todo / 20 urges)'
     $flowLog = Join-Path $LogDir 'seed-flow.log'
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'seed-flow.ps1') 2>&1 | Tee-Object -FilePath $flowLog
     $code = $LASTEXITCODE
@@ -111,7 +111,7 @@ if ($SkipFlowSeed) {
 }
 
 # ------------------------------ baseline report ------------------------------
-Write-Step 'demo-reset: baseline'
+Write-Step 'reset-data: baseline'
 $menu = Sql-One 'SELECT COUNT(*) FROM sys_menu WHERE deleted=0'
 $roleMenu = Sql-One 'SELECT COUNT(*) FROM sys_role_menu'
 $config = Sql-One 'SELECT COUNT(*) FROM sys_config WHERE deleted=0'
@@ -120,22 +120,22 @@ $risk = Sql-One 'SELECT COUNT(*) FROM icp_risk WHERE deleted=0'
 $defect = Sql-One 'SELECT COUNT(*) FROM icp_defect WHERE deleted=0'
 $task = Sql-One 'SELECT COUNT(*) FROM coll_task WHERE deleted=0'
 
-Write-Host ('demo-reset: seed rows menu=' + $menu + ' role_menu=' + $roleMenu + ' config=' + $config + ' policy=' + $policy + ' risk=' + $risk + ' defect=' + $defect + ' task=' + $task)
+Write-Host ('reset-data: seed rows menu=' + $menu + ' role_menu=' + $roleMenu + ' config=' + $config + ' policy=' + $policy + ' risk=' + $risk + ' defect=' + $defect + ' task=' + $task)
 
 try {
     $token = Get-Token 'admin'
     $h = @{ Authorization = 'Bearer ' + $token }
     $mon = Invoke-RestMethod -Uri ("http://127.0.0.1:" + $BackendPort + "/api/v1/workflow/monitor?pageNum=1&pageSize=1") -Headers $h
     $d = $mon.data
-    Write-Host ('demo-reset: workflow total=' + $d.total + ' running=' + $d.running + ' completed=' + $d.completed + ' rejected=' + $d.rejected + ' overdue=' + $d.overdue)
+    Write-Host ('reset-data: workflow total=' + $d.total + ' running=' + $d.running + ' completed=' + $d.completed + ' rejected=' + $d.rejected + ' overdue=' + $d.overdue)
     $todoIcp = Invoke-RestMethod -Uri ("http://127.0.0.1:" + $BackendPort + "/api/v1/workflow/todo?pageNum=1&pageSize=1") -Headers @{ Authorization = 'Bearer ' + (Get-Token 'icpadmin') }
-    Write-Host ('demo-reset: todo icpadmin=' + $todoIcp.data.total)
+    Write-Host ('reset-data: todo icpadmin=' + $todoIcp.data.total)
 } catch {
     Write-Host ('WARN: baseline API probe failed: ' + $_.Exception.Message)
 }
 
 $elapsed = [math]::Round(((Get-Date) - $startAll).TotalSeconds, 1)
 Write-Host ''
-Write-Host ('demo-reset: DONE in ' + $elapsed + 's (backend http://127.0.0.1:' + $BackendPort + ', MySQL ' + $MySQLPort + ')')
-if ($flowSummary) { Write-Host ('demo-reset: ' + $flowSummary.Trim()) }
+Write-Host ('reset-data: DONE in ' + $elapsed + 's (backend http://127.0.0.1:' + $BackendPort + ', MySQL ' + $MySQLPort + ')')
+if ($flowSummary) { Write-Host ('reset-data: ' + $flowSummary.Trim()) }
 exit 0

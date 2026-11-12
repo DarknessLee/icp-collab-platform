@@ -8,7 +8,7 @@
 # The first four suites require the clean seed (policies 40 / risks 40 /
 # defects 30 / tasks 80). If the current DB is not clean:
 #   - use -Reset to let this script stop -> db-reset -> start first;
-#   - or run scripts\demo-reset.ps1 manually and then this script without -Reset.
+#   - or run scripts\reset-data.ps1 manually and then this script without -Reset.
 #
 # Usage:
 #   powershell -NoProfile -ExecutionPolicy Bypass -File scripts\test-api.ps1
@@ -123,7 +123,7 @@ if ($Reset) {
 $clean = Test-CleanSeed
 if (-not $clean) {
     Write-Host 'ERROR: database is not on the clean seed (expected policies 40 / risks 40 / defects 30 / tasks 80).'
-    Write-Host '       Run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\demo-reset.ps1 -SkipFlowSeed'
+    Write-Host '       Run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\reset-data.ps1 -SkipFlowSeed'
     Write-Host '       or re-run this script with -Reset.'
     exit 1
 }

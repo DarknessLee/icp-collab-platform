@@ -7,7 +7,9 @@
 param([switch]$RunRegression)
 $ErrorActionPreference = 'Continue'
 $base = 'http://127.0.0.1:8080/api/v1'
-$mysql = 'C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe'
+. "$PSScriptRoot\_env.ps1"
+$ErrorActionPreference = 'Continue'
+$mysql = Join-Path $MySQLBin 'mysql.exe'
 $repo = Split-Path -Parent $PSScriptRoot
 $script:pass = 0
 $script:fail = 0

@@ -45,12 +45,12 @@ curl -s http://localhost:8081/actuator/health   # {"status":"UP",...}
 
 首次启动时 MySQL 空库 → 后端启动阶段由 **Flyway** 自动执行 `V1__schema.sql` / `V2__seed_base.sql` /
 `V3__seed_business.sql`，得到与验收一致的种子数据（含 179 菜单 / 540 角色菜单 / 40 制度等）。
-如需 60 实例 + 20 催办的**演示态**（本机 `demo-reset.ps1` 等价物），在容器内执行：
+如需 60 实例 + 20 催办的**初始数据态**（本机 `reset-data.ps1` 等价物），在容器内执行：
 
 ```bash
 docker compose exec backend sh -c 'java -version'   # 确认容器可用
-# 演示态脚本依赖 PowerShell/本机 MySQL，容器内不提供；演示数据请使用本目录外的
-# scripts/demo-reset.ps1（Windows 本地）或直接使用种子态（功能完整，只是流程实例较少）。
+# 初始数据态脚本依赖 PowerShell/本机 MySQL，容器内不提供；示例数据请使用本目录外的
+# scripts/reset-data.ps1（Windows 本地）或直接使用种子态（功能完整，只是流程实例较少）。
 ```
 
 ## 3. 端口 / 账号
@@ -63,7 +63,7 @@ docker compose exec backend sh -c 'java -version'   # 确认容器可用
 | minio | 9000/9001 | 9000/9001 | `MINIO_PORT` / `MINIO_CONSOLE_PORT` | 二期对象存储预留 |
 | redis | 6379 | 不映射 | — | 二期缓存预留（当前后端用 Caffeine） |
 
-演示账号：`admin`、`icpadmin`、`auditor`、`exec`、`dept01`–`dept06`、`staff01`–`staff20`，口令统一 `Icp@2026`。
+预置账号：`admin`、`icpadmin`、`auditor`、`exec`、`dept01`–`dept06`、`staff01`–`staff20`，口令统一 `Icp@2026`。
 生产部署请立即修改管理员口令，并把 `.env` 排除在版本库外。
 
 ## 4. 配置对应关系（Compose ↔ application.yml）
@@ -77,7 +77,7 @@ docker compose exec backend sh -c 'java -version'   # 确认容器可用
 | `DB_URL` | `spring.datasource.url` | `jdbc:mysql://127.0.0.1:3307/icp_platform?...` | `jdbc:mysql://mysql:3306/icp_platform?...` |
 | `DB_USERNAME` | `spring.datasource.username` | `icp_app` | `${APP_DB_USER}` |
 | `DB_PASSWORD` | `spring.datasource.password` | `Icp@2026` | `${APP_DB_PASSWORD}` |
-| `JWT_SECRET` | `icp.jwt.secret` | 本地 demo key | `.env` 的 base64 key |
+| `JWT_SECRET` | `icp.jwt.secret` | 本地 development key | `.env` 的 base64 key |
 | `STORAGE_ROOT` | `icp.storage.local-root` | `../.runtime/files` | `/app/data/files`（挂 `app-files` 卷） |
 | `CORS_ORIGINS` | `app.cors.allowed-origins` | 5173/4173 四个源 | `http://localhost:8080` |
 | `SPRING_PROFILES_ACTIVE` | `spring.profiles.active` | `local` | `container` |
@@ -133,8 +133,8 @@ bash scripts/deploy.sh --offline
 - **端口冲突**：`.env` 改 `FRONTEND_PORT` / `BACKEND_PORT` / `MYSQL_PORT` 后重新 `docker compose up -d`。
 - **附件丢失**：附件在 `app-files` 卷（`STORAGE_ROOT=/app/data/files`），换机/迁移请用 `backup.sh`
   的 `attachments.tgz`，不要只拷数据库。
-- **演示态流程实例**：容器内的种子态没有 60 个流程实例；如需完整演示数据，请在 Windows 本机按
-  README「快速开始」运行 `demo-reset.ps1`（该路径已验证）。
+- **初始数据态流程实例**：容器内的种子态没有 60 个流程实例；如需完整示例数据，请在 Windows 本机按
+  README「快速开始」运行 `reset-data.ps1`（该路径已验证）。
 
 ## 8. 与旧版/本地部署的差异
 

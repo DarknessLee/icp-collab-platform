@@ -49,7 +49,7 @@ test('E18 会议纪要：新建 → 列表检索 → 详情 → 写纪要置「�
   expect(hit, '列表应按关键字检索到新建会议').toBeTruthy();
 
   // API：写纪要 → 状态置 1
-  await apiPut(`/meetings/${created.id}/minutes`, admin.token, { minutes: '会议就演示范围与验收口径达成一致，按计划推进。' });
+  await apiPut(`/meetings/${created.id}/minutes`, admin.token, { minutes: '会议就示例范围与验收口径达成一致，按计划推进。' });
   const detail = await apiGet<MeetingRow>(`/meetings/${created.id}`, admin.token);
   expect(Number(detail.status)).toBe(1);
   expect(detail.minutes ?? '').toContain('达成一致');
@@ -76,7 +76,7 @@ test('E18 会议纪要：新建 → 列表检索 → 详情 → 写纪要置「�
   await expect(drawer).toContainText('达成一致');
   expectNoIssues(issues, 'E18 会议纪要');
 
-  // 清理：删除该会议（不污染演示种子 20 条）
+  // 清理：删除该会议（不污染示例种子 20 条）
   await apiDelete(`/meetings/${created.id}`, admin.token);
   const after = await apiGet<PageData>(`/meetings?pageNum=1&pageSize=20&keyword=${encodeURIComponent(title)}`, admin.token);
   expect(after.total ?? 0, 'E2E 会议应已清理').toBe(0);

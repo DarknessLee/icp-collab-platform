@@ -7,8 +7,8 @@
 #   powershell -NoProfile -ExecutionPolicy Bypass -File scripts\screenshots.ps1
 #       # validate only: list the PNGs and check the count
 #   ... -Take
-#       # run the e2e screenshot suite first (e2e\npm run e2e:shots), then validate
-#       # NOTE: run scripts\demo-reset.ps1 first so the UI shows the demo data
+#       # run the e2e screenshot suite first (cd e2e; npm run e2e:shots), then validate
+#       # NOTE: run scripts\reset-data.ps1 first so the UI shows the seed data
 #       #       (60 flow instances / 40 todo / 20 urges).
 # ---------------------------------------------------------------------------
 param(
@@ -32,7 +32,7 @@ if ($Take) {
     $e2ePackage = Join-Path $e2eDir 'package.json'
     if (-not (Test-Path $e2ePackage)) {
         Write-Host 'ERROR: cannot capture screenshots - e2e\package.json not found (task-14).'
-        Write-Host '       Run scripts\demo-reset.ps1 first, then retry once the e2e harness exists.'
+        Write-Host '       Run scripts\reset-data.ps1 first, then retry once the e2e harness exists.'
         exit 1
     }
     $pkg = [System.IO.File]::ReadAllText($e2ePackage, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
@@ -69,7 +69,7 @@ Write-Step ('screenshots: directory ' + $shotsDir)
 $shots = Get-Shots
 if ($shots.Count -eq 0) {
     Write-Host 'FAIL: no PNG screenshots found.'
-    Write-Host '      Run scripts\demo-reset.ps1, then scripts\screenshots.ps1 -Take (needs e2e\ from task-14).'
+    Write-Host '      Run scripts\reset-data.ps1, then scripts\screenshots.ps1 -Take (needs e2e\ from task-14).'
     exit 1
 }
 foreach ($s in $shots) {

@@ -3,7 +3,7 @@
 #
 #   MySQL 3307 (init if the datadir is missing) -> database/user ensure ->
 #   backend 8080 (spring-boot:run, health UP) -> frontend preview 4173 (build if
-#   frontend/dist is missing) -> print URLs and demo accounts.
+#   frontend/dist is missing) -> print URLs and predefined accounts.
 #
 # Idempotent: already running parts are detected and skipped with a hint.
 #

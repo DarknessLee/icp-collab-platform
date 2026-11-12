@@ -36,7 +36,7 @@ function onRemove(): void {
         show-icon
         title="仅用于 M2a 验收：白名单 pdf/png/jpg/jpeg/doc/docx/xls/xlsx/zip，单个文件≤20MB；非白名单文件前端直接提示，后端返回 41300。"
       />
-      <div class="upload-demo">
+      <div class="upload-preview">
         <FileUpload @success="onSuccess" @remove="onRemove" />
       </div>
       <el-descriptions v-if="result" class="result-block" :column="2" border>
@@ -53,7 +53,7 @@ function onRemove(): void {
 </template>
 
 <style scoped>
-.upload-demo {
+.upload-preview {
   max-width: 560px;
   margin-top: 16px;
 }

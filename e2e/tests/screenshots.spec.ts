@@ -4,8 +4,8 @@ import path from 'node:path';
 import { apiGet, apiLogin, uiLogin, type MenuNode } from './helpers';
 
 /**
- * M3 最终截图（S01–S28）。
- * 仅在演示态（scripts/demo-reset.ps1 → 60 实例/40 待办/20 催办）运行：
+ * 最终截图（S01–S30）。
+ * 仅在初始数据态（scripts/reset-data.ps1 → 60 实例/40 待办/20 催办）运行：
  *   npm run e2e:shots
  * 其余场景（如 clean seed）自动 skip，保证 `npm run e2e` 不受影响。
  */
@@ -33,9 +33,9 @@ interface ScreenshotCase {
 }
 
 test.describe('S01–S30 最终截图', () => {
-  test.skip(process.env.E2E_DEMO !== '1', '最终截图仅在演示态运行（npm run e2e:shots）');
+  test.skip(process.env.E2E_SHOTS !== '1', '最终截图仅在初始数据态运行（npm run e2e:shots）');
 
-  test('生成演示态最终截图与 INDEX.md', async ({ page }) => {
+  test('生成初始数据态最终截图与 INDEX.md', async ({ page }) => {
     test.setTimeout(15 * 60_000);
     await mkdir(SHOTS_DIR, { recursive: true });
 
@@ -116,7 +116,7 @@ test.describe('S01–S30 最终截图', () => {
           // S28 会把视口缩到 390x844，这里恢复桌面尺寸
           await target.setViewportSize({ width: 1440, height: 900 });
           await target.locator('.el-table__row').first().waitFor({ state: 'visible', timeout: 20_000 });
-          // 选一条「已召开」的会议（有纪要），演示详情抽屉的纪要展示
+          // 选一条「已召开」的会议（有纪要），示例详情抽屉的纪要展示
           const row = target.locator('.el-table__row').filter({ hasText: '已召开' }).first();
           await row.locator('button:has-text("详情")').click();
           const drawer = target.locator('.el-drawer:visible').first();
@@ -176,7 +176,7 @@ test.describe('S01–S30 最终截图', () => {
       '',
       `生成时间：${new Date().toISOString()}`,
       '',
-      '> 截图取自演示态（`scripts/demo-reset.ps1`）：**60 实例 / 40 待办 / 20 催办**，种子基准日 **2026-10-31**；前端为 4173 预览构建。',
+      '> 截图取自初始数据态（`scripts/reset-data.ps1`）：**60 实例 / 40 待办 / 20 催办**，种子基准日 **2026-10-31**；前端为 4173 预览构建。',
       '> 制度 52 条（其中 seed-flow 追加 12 条流程政策）、风险 40 条、缺陷 30 条。',
       '',
       '| 编号 | 文件 | 说明 | 页面路径 | 角色 | 种子数字（制度/风险/缺陷） |',

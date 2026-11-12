@@ -1,11 +1,11 @@
 # 当前状态
 
-- **软件名称/版本**：企业内控与协同运营管理平台 V1.0（未发表）
-- **当前阶段**：**M6 演示增强（W1–W3 已完成并交付）**；一期 M0–M4 已闭环交付
+- **软件名称/版本**：企业内控与协同运营管理平台 V1.0
+- **当前阶段**：**M6 能力增强（W1–W3 已完成并交付）**；一期 M0–M4 已闭环交付；对外表述已统一为正式项目口径（无「演示/demo」字样，前端离线 Mock 登录已移除）
 - **最新 commit**：M6-W3 `42f3b82`（会议纪要 + 数据大屏 + 30 截图）；M6-W2 `524db6b`（采购金额分级审批）；M6-W1 `594ac6f`（图表下钻、列表脱敏、审批抄送与消息筛选）与 `c46aebd`（文档在线预览）；M4 `12bef3e`（+ 回填 `2b295c1`）；M3 `5ad3d03`（+ 回填 `46033bc`）；M2e `c4668ed`；M2d `f57c831`；M2c `e334734`；M2b `fa32065`；M2a `7f11af8`；M1 `1c9570a`
 - **远端**：`origin` → `http://192.168.1.100:3300/liyunqing/icp-collab-platform.git`（master 跟踪 origin/master）
-- **交付入口**：`scripts\start-local.ps1` → 浏览器 `http://127.0.0.1:4173`（演示账号 `admin` 等，密码 `Icp@2026`）；一键复现演示态 `scripts\demo-reset.ps1`
-- **M6 演示增强（docs/17）**：
+- **交付入口**：`scripts\start-local.ps1` → 浏览器 `http://127.0.0.1:4173`（预置账号 `admin` 等，密码 `Icp@2026`）；一键复现初始数据态 `scripts\reset-data.ps1`
+- **M6 能力增强（docs/17）**：
   - **W1（已完成并推送）**：文档中心 PDF/图片在线预览（`c46aebd`）；报表图表点击下钻（缺陷图 → 缺陷列表、风险饼图 → 风险列表、任务图 → 流程监控）、用户列表手机号/邮箱脱敏、审批/驳回可选抄送人 + 消息中心「流程抄送」筛选（`594ac6f`，E15/E16 用例、截图重出）
   - **W2（已完成并推送）**：采购申请按金额分级审批——`purchase_apply` 增加 `amountGateway`，≤5000 部门审批后结束，>5000 追加管理层审批；流程变量 `purchaseAmount` 由 `formData.amount` 注入（`524db6b`，E17 两用例）
   - **W3（已完成并推送）**：会议纪要模块 `coll_meeting`（Flyway V4、20 条种子、`HY-2026-###` 编码、数据范围、审计）+ 数据大屏 `/screen`（6 KPI + 6 面板、60s 刷新，复用现有 API）；E18/E19 用例、截图 S29/S30
@@ -13,7 +13,7 @@
 - **M4 验收结论**：通过（详见 `docs/16-M4-交付验收报告.md`）
   - 交付：`deploy/` 11 文件（Compose 五服务 / Nginx / Dockerfile / MySQL init / deploy·backup·restore）；`start-local` / `stop-local` / `backup` / `restore` / `check-docs` 脚本；`docs/13` 部署运维、`docs/14` 用户手册
   - 实测：`start-local` 16.4s（重跑 0.5s 幂等）、**冷启动 45.9s**、`stop-local -WithDb` 6.7s、备份 1.1s / 恢复 16.7s（db-validate 15/15、附件 137 全恢复）、`check-docs` **PASS=16 FAIL=0**、`verify.ps1 -SkipE2E -SkipShots` **PASS 248.8s**（170 tests、API 375 例）
-  - env 化：`SERVER_PORT` / `DB_URL` / `DB_PASSWORD` / `JWT_SECRET` / `STORAGE_ROOT` / `CORS_ORIGINS` 等均可覆盖，默认=本机演示值
+  - env 化：`SERVER_PORT` / `DB_URL` / `DB_PASSWORD` / `JWT_SECRET` / `STORAGE_ROOT` / `CORS_ORIGINS` 等均可覆盖，默认=本机测试值
 - **M3 验收结论**：通过（`docs/12-M3-验收报告.md`）：E2E 23 passed / 1 skipped、截图 S01–S28、API 375 例、`verify.ps1` 317.5s PASS
 - **M2e**：通过（`docs/11`）：工作台 + 6 报表 + 4 类预警 + 5 定时 handler；169 测试、API 62/0、Lead 46/46 ×2、前端 126/126 + 47/47
 - **M2d**：通过（`docs/10`）：协同 6 组接口（任务/文档/借阅/公告/消息 SSE/日程）；147 测试、API 109/109、Lead 44/44、前端 276/276
@@ -22,11 +22,11 @@
 - **M2a**：通过（`docs/07`）：组织权限 9 组接口 + 数据权限 + 登录安全 + 审计 + 附件；API 87/87、Lead 57/57
 - **M1**：通过（`docs/06`）：契约三件套、42 表与种子、前后端骨架
 - **当前运行环境**（本机可复现）：
-  - MySQL 项目实例 `127.0.0.1:3307`（datadir `.runtime\mysql`，库 `icp_platform`，账号 `icp_app`），系统 MySQL80/3306 未动
+  - MySQL 项目实例 `127.0.0.1:3307`（datadir `.runtime\mysql`，库 `icp_platform`，账号 `icp_app`），系统 3306 服务未动；`_env.ps1` 自动探测本机 MySQL（8.0/8.4/5.7），脚本与 Flyway 已在 5.7.44 上实测通过（DECISIONS D44）
   - 后端 `http://127.0.0.1:8080`（Spring Boot 3.3.4 / Java 21 / Flowable 7.1.0，ACT_* 39 张）；前端预览 `http://127.0.0.1:4173`、dev `http://127.0.0.1:5173`
-  - 演示账号：`admin` / `icpadmin` / `auditor` / `exec` / `dept01`–`dept06` / `staff01`–`staff20`，密码 `Icp@2026`
-- **演示态**：60 实例（40 运行 / 20 完成）、待办 40、催办 20、制度 52、风险 40、缺陷 30、任务 80、会议纪要 20（12 已召开/5 待召开/3 已取消）、`sys_menu 184` / `sys_role_menu 558` / `sys_config 16` / `sys_dict_type 21` / `sys_dict_data 88`
+  - 预置账号：`admin` / `icpadmin` / `auditor` / `exec` / `dept01`–`dept06` / `staff01`–`staff20`，密码 `Icp@2026`
+- **初始数据态**：60 实例（40 运行 / 20 完成）、待办 40、催办 20、制度 52、风险 40、缺陷 30、任务 80、会议纪要 20（12 已召开/5 待召开/3 已取消）、`sys_menu 184` / `sys_role_menu 558` / `sys_config 16` / `sys_dict_type 21` / `sys_dict_data 88`
 - **未完成（后续可选）**：Docker Compose 需在具备 Docker 的环境按 `deploy/README.md` 实测；导出扩面暂缓；合同管理不做
-- **已知限制**：Redis/MinIO 以 Caffeine+本地存储替代；自定义数据权限（5）/多租户/K8s 二期；流程为一级审批（采购为金额两级示例）；矩阵唯一键与逻辑删除冲突（docs/08 §8）；文档可见性非 ADMIN 仅创建人/授权/借阅；SSE 与在线会话单实例内存；定时器不解析 cronExpression；审计哈希链属等保增强，一期不做
-- **阅读入口**：README → STATUS → DECISIONS → PLAN-MATRIX → 当前阶段 docs（交付：docs/13 部署运维、docs/14 用户手册、docs/16 交付验收、docs/17 演示增强）
-- **更新时间**：2026-11-05
+- **已知限制**：Redis/MinIO 以 Caffeine+本地存储替代；自定义数据权限（5）/多租户/K8s 二期；流程为一级审批（采购为金额两级审批）；矩阵唯一键与逻辑删除冲突（docs/08 §8）；文档可见性非 ADMIN 仅创建人/授权/借阅；SSE 与在线会话单实例内存；定时器不解析 cronExpression；审计哈希链属等保增强，一期不做
+- **阅读入口**：README → STATUS → DECISIONS → PLAN-MATRIX → 当前阶段 docs（交付：docs/13 部署运维、docs/14 用户手册、docs/16 交付验收、docs/17 能力增强）
+- **更新时间**：2026-11-12

@@ -5,7 +5,7 @@ import { useAppStore } from '@/stores/app'
 import { useUserStore } from '@/stores/user'
 import { resolveIcon } from '@/utils/icons'
 import { isDirectoryMenu, normalizePath } from '@/utils/menu'
-import { APP_DEMO_LABEL, APP_NAME, APP_SHORT_NAME, APP_VERSION } from '@/config/app'
+import { APP_NAME, APP_SHORT_NAME, APP_VERSION } from '@/config/app'
 
 defineProps<{ mobile: boolean }>()
 
@@ -34,7 +34,7 @@ function handleSelect(path: string): void {
       <div class="logo-mark">控</div>
       <div v-show="!collapsed" class="logo-text">
         <div class="logo-title" :title="APP_NAME">{{ APP_SHORT_NAME }}</div>
-        <div class="logo-sub">{{ APP_VERSION }} · {{ APP_DEMO_LABEL }}</div>
+        <div class="logo-sub">{{ APP_VERSION }}</div>
       </div>
     </div>
 

@@ -36,7 +36,7 @@ export interface PageIssues {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** 等待后端可登录（最多 60s），用于脚本/演示态刚启动时的抖动 */
+/** 等待后端可登录（最多 60s），用于脚本/初始数据态刚启动时的抖动 */
 export async function waitBackend(timeoutMs = 60_000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   let lastError = '';

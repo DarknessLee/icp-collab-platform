@@ -15,7 +15,7 @@
   数据库   MySQL 8.0（项目内独立实例 `127.0.0.1:3307`，库 `icp_platform`；本地脚本兼容 MySQL 5.7+）+ Flyway V1–V4（43 张业务表 + ACT_* 39 张）  
   存储/缓存   本地磁盘附件（`FileStorage` 接口，预留 S3/MinIO）／进程内 Caffeine（`CacheService` 接口，预留 Redis）  
   测试   JUnit 5 + Spring Boot Test（177 tests）；Playwright E2E（`e2e/`，E01–E19 + 截图 spec，31 项）；API 验收脚本 5 套（375 例）  
-  部署   Docker Compose 文件（M4 交付，本机无 Docker 不实测）+ 本地 PowerShell 脚本（一键启动/重置/备份）  
+  部署   Docker Compose 一键部署（`deploy/`：MySQL / 后端 / Nginx / 前端 + 备份恢复脚本）+ 本地 PowerShell 脚本（一键启动/重置/备份）  
 
 ## 功能一览（全部已实现并验收）
 
@@ -132,7 +132,7 @@ powershell -ExecutionPolicy Bypass -File scripts\reset-data.ps1        # 可选�
 - 后端健康检查：`http://127.0.0.1:8080/actuator/health`；Swagger：`/swagger-ui/index.html`。
 - 停止：`scripts\stop-local.ps1`（加 `-WithDb` 连 MySQL 一起停）。
 - 备份/恢复：`scripts\backup.ps1` → `scripts\restore.ps1 -Path <备份目录>`（实测 1.1s / 16.7s，附件与数据完整回滚）。
-- Docker 部署：见 [`deploy/README.md`](deploy/README.md) 与 [docs/13 部署与运维手册](docs/13-部署与运维手册.md)（Compose 为交付件，本机无 Docker 未实测）。
+- Docker 部署：见 [`deploy/README.md`](deploy/README.md) 与 [docs/13 部署与运维手册](docs/13-部署与运维手册.md)（含 Compose、Nginx、环境变量与备份恢复；本机未安装 Docker，容器链路按文档执行）。
 
 ## 验收命令（可串行复跑）
 

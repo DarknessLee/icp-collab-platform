@@ -138,11 +138,11 @@ bash scripts/deploy.sh --offline
 
 ## 8. 与旧版/本地部署的差异
 
-| 项 | 本机（已验证） | Docker Compose（仅交付） |
+| 项 | 本机（已验证） | Docker Compose（部署文件） |
 | --- | --- | --- |
 | 数据库 | 项目内 MySQL 3307（`.runtime/mysql`） | `mysql:8.0` 容器，卷 `mysql-data` |
 | 后端 | `mvn spring-boot:run`（8080） | `backend:8080`，宿主 8081 |
 | 前端 | `npm run preview`（4173） | Nginx 80，宿主 8080 |
 | 附件 | `.runtime/files` | 卷 `app-files` → `/app/data/files` |
 | 缓存/对象存储 | Caffeine / 本地磁盘 | redis/minio 容器（预留，暂未接入业务） |
-| 备份 | `scripts/backup.ps1`（已实测） | `deploy/scripts/backup.sh`（未实测） |
+| 备份 | `scripts/backup.ps1`（已实测） | `deploy/scripts/backup.sh`（随容器环境执行） |

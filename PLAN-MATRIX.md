@@ -43,7 +43,6 @@
 | Docker Compose 一键部署 | 已交付 `deploy/` 11 文件（Compose 五服务 + Nginx + Dockerfile + MySQL init + deploy/backup/restore）；本机无 Docker 未实测（D04/Q1） | 静态检查；env 覆盖实测（18080 健康 + login code=0） | deploy/README、docs/13 §5 | 已实现（交付件未本机拉起） |
 | 本地一键启动（MySQL 3307 + 后端 + 前端） | 已完成：`scripts/start-local.ps1` / `stop-local.ps1` | start-local 16.4s（幂等 0.5s）、本机冷启动 45.9s；stop-local -WithDb 6.7s | docs/13 §4、docs/16 §4 | 已实现 |
 | 备份/恢复脚本与一次恢复演练 | 已完成：`backup.ps1`（mysqldump + 附件 + manifest sha256） / `restore.ps1` | 备份 1.1s → 破坏 → 恢复 16.7s：db-validate 15/15、policy 40/task 80/files 137 全恢复 | docs/13 §8、docs/16 §4 | 已实现 |
-| 60 页源码/60 页手册/申请表（M5） | 已移除：用户 2026-11-05 确认软著材料不再负责 | — | DECISIONS D11 | 不做 |
 
 ## 二、验收场景（方案 §九）
 

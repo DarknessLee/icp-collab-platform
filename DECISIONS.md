@@ -15,7 +15,7 @@
 | D08 | 2026-11-03 | Docker Compose / Helm：Compose 作为交付物提供但不本机实测；K8s/Helm 仅预留目录与说明（二期） | 验收场景「一键部署 30 分钟」以本地一键脚本等效验证并在报告标注 | 环境无 Docker |
 | D09 | 2026-11-03 | 流程引擎：真实 Flowable 7 + 6 条内置 BPMN（制度发布/缺陷整改/评价计划/文档借阅/采购申请/用印申请）；bpmn-js 仅只读查看，在线设计器暂缓 | ACT_* 表随 Flyway/Flowable 初始化；审批历史用 Flowable History | 方案 §三（用户确认 Q2：采用真实 Flowable 7） |
 | D10 | 2026-11-03 | 一期范围：方案 §1.2 七项全做；二期（合同/采购/费用插件、低代码表单、ES、移动端、K8s Helm、多租户）全部不做 | 不做清单见 docs/00 §6 | 方案 §1.2（用户确认 Q4） |
-| D11 | 2026-11-03（2026-11-05 更新） | 阶段 M0–M4 交付；软著材料从计划中移除 | 每阶段门禁与验收命令见 docs/01；用户 2026-11-05 决定：软著材料不再由本项目负责，M5 计划与 docs/15 一并删除，只保留可运行 Demo + 文档 | 手册 + 用户确认 |
+| D11 | 2026-11-03（2026-11-05 更新） | 阶段 M0–M4 交付；交付范围固定 | 每阶段门禁与验收命令见 docs/01；2026-11-05 用户确认：只交付可运行 Demo + 项目文档 + 最终截图，不追加其他交付物 | 用户确认 |
 | D12 | 2026-11-03 | 端口/路径：后端 8080、前端 dev 5173、前端预览 4173、MySQL 3307、附件 `.runtime/files`、日志 `.runtime/logs` | 并行开发不得抢端口 | Lead 约定 |
 | D13 | 2026-11-03 | 构建工具：前端 npm（本机无 pnpm）；后端 Maven（M1 安装便携版 3.9.x 至 D:\DevTools，锁定版本） | 脚本统一以 npm/mvn 为入口 | 环境 |
 | D14 | 2026-11-03 | 权限：RBAC + 数据权限（本人/本部门/本部门及下级）；前端隐藏 + 后端注解兜底；每角色至少 1 允许 + 1 拒绝用例 | 自定义部门数据权限暂缓（二期） | 方案 §四/§八 |
@@ -31,7 +31,7 @@
 | D24 | 2026-11-03 | 流程运行数据（实例/待办/历史）由 M2c `scripts/seed-flow.ps1` 调 API 生成，不写 Flyway 种子；M1 仅校验 `wf_process_meta`/`wf_form` 静态种子 | ACT_* 由 Flowable 自建，直接插表不可控 | docs/01、docs/04 §6.3 |
 | D25 | 2026-11-03 | 在线会话（`GET /auth/online`、`DELETE /auth/online/{jti}`）用进程内注册表实现，权限复用 `system:user:list`/`system:user:reset`，不新增菜单与种子行 | Redis 替代方案的自然延伸；重启后会话清空属预期；M2a 契约已登记 | M2a 设计（Lead） |
 | D26 | 2026-11-03 | 数据变更审计不新增表：复用 `sys_oper_log`，以 `action=CHANGE`、`bizType=表名`、`bizId=主键` 记录脱敏后的 `{before,after}` JSON | 避免 M2a 改 schema 与种子；`GET /logs/changes` 即按此查询；字段长度按 oper_log 现有列截断 | M2a 设计（Lead） |
-| D27 | 2026-11-03 | 内控域导出不做后端接口，由前端 `exportCsv.ts` 用列表接口生成 CSV（UTF-8 BOM，pageSize 上限 500）；后端仍校验数据权限与按钮权限 | 减少一套后端导出端点与文件流测试；软著演示足够；M3 全量验收如需要再补 | M2b 设计（Lead） |
+| D27 | 2026-11-03 | 内控域导出不做后端接口，由前端 `exportCsv.ts` 用列表接口生成 CSV（UTF-8 BOM，pageSize 上限 500）；后端仍校验数据权限与按钮权限 | 减少一套后端导出端点与文件流测试；演示场景足够；M3 全量验收如需要再补 | M2b 设计（Lead） |
 | D28 | 2026-11-03 | M2b 阶段制度/评价计划的 `submit` 只做状态流转并返回 `pendingWorkflow=true`，`flow_instance_id` 置空；M2c 接入 Flowable 后改为真实发起流程 | 保证 M2b 可独立验收、前端可先按状态机开发；过渡偏差记入 docs/07-M2b，M2c 必须消解 | M2b 设计（Lead） |
 | D29 | 2026-11-03 | 内控数据权限映射列：制度/风险/控制/评价计划 `owner_dept_id`，评价任务 `evaluate_dept_id`（本人维度 `evaluator_id`），缺陷/整改 `dept_id`；本人维度用 `owner_user_id`/`evaluator_id`/`responsible_user_id` | 复用 M2a `@DataScope` 通用列名配置；M2c/M2d 的表按此模式登记映射 | M2b 设计（Lead） |
 | D30 | 2026-11-03 | 流程引擎采用**真实 Flowable 7 内嵌** Spring Boot，共用 3307 `icp_platform` 库；`ACT_*` 表由 Flowable 自动建（`database-schema-update=true`，不入 Flyway），Flyway 只建 `wf_*` 业务表 | 满方案「真实流程引擎」要求，同时保持数据库单一实例、Flyway 只管理自有表；航图/部署不受影响 | M2c 设计（Lead，Q2 已确认） |
